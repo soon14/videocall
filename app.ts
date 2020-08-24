@@ -48,28 +48,32 @@ wss.on('connection', (ws) => {
             );
             // console.log(JSON.stringify(msgJson, null, 2));
         }
-
-        switch (msgJson.type) {
-            case "video-offer":
-                sendToOneUser(msgJson.target, msg);
-                break;
-            case "video-answer":
-                sendToOneUser(msgJson.target, msg);
-                break;
-            case "new-ice-candidate":
-                broadcast(source, msg);
-                break;
-            case "hang-up":
-                broadcast(source, msg);
-                break;
-            case "user-joined-room":
-                broadcast(source, msg);
-                break;
-            default:
-                console.log("unrecognised message:");
-                console.log(JSON.stringify(msgJson, null, 2));
-                break;
+        if (msgJson.target) {
+            sendToOneUser(msgJson.target, msg);
+        } else {
+            broadcast(source, msg);
         }
+        // switch (msgJson.type) {
+        //     case "video-offer":
+        //         sendToOneUser(msgJson.target, msg);
+        //         break;
+        //     case "video-answer":
+        //         sendToOneUser(msgJson.target, msg);
+        //         break;
+        //     case "new-ice-candidate":
+        //         broadcast(source, msg);
+        //         break;
+        //     case "hang-up":
+        //         broadcast(source, msg);
+        //         break;
+        //     case "user-joined-room":
+        //         broadcast(source, msg);
+        //         break;
+        //     default:
+        //         console.log("unrecognised message:");
+        //         console.log(JSON.stringify(msgJson, null, 2));
+        //         break;
+        // }
     });
 });
 

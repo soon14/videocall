@@ -1,0 +1,8 @@
+#video_container {
+    display: grid;
+}
+
+body {
+    margin: 0;
+    height: 100%;
+}

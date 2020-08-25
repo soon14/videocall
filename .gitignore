@@ -1,4 +1,6 @@
 .idea/
-app.js
 client/script.js
 node_modules/
+*.js
+*.map
+ideas.txt

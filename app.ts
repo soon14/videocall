@@ -2,26 +2,64 @@ import * as express from 'express';
 const app = express();
 import * as http from 'http';
 import * as WebSocket from 'ws';
+import {join} from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import {Clients, Message} from "./interfaces";
+import {Clients, Message, Rooms} from "./interfaces";
 
-const port = 3000;
-const wss = new WebSocket.Server({port});
+const socketPort = 3000;
+const httpPort = 8080;
 
 const clients: Clients = {};
+const rooms: Rooms = {};
 
+const wss = new WebSocket.Server({port: socketPort});
 wss.on('listening', () => {
-    console.log("websocket server listening on port %d", port);
+    console.log("websocket server listening on port %d", socketPort);
 });
 
 wss.on('connection', (ws) => {
     console.log("client connected");
+    console.log(clients);
+    console.log(rooms);
+
+    ws.on('message', (msg) => {
+        const msgJson: Message = JSON.parse(msg);
+        const source = msgJson.source;
+
+        // for some message types, we need to process some things
+        switch(msgJson.type) {
+            case "register":
+                handleRegister(ws, msgJson);
+                break;
+            case "hang-up":
+                handleDisconnect(source, msg);
+                break;
+            // otherwise, simply forward message to other user(s)
+            default:
+                if (msgJson.target) {
+                    sendToOneUser(msgJson.target, msg);
+                } else {
+                    broadcast(source, msg);
+                }
+        }
+
+
+
+    });
+});
+
+function handleRegister(ws, msg) {
+    // if a user is trying to register himself by sending us his room id,
+    // which he extracted from his url, we need to process it
+    const roomId = msg.payload;
+
+    // generate userId
     const userId = uuidv4();
 
-    // store client in memory
     clients[userId] = {
         name: userId, // can be changed later by the user to something more readable
-        socket: ws
+        socket: ws,
+        room: roomId
     };
 
     // let client know his id
@@ -30,62 +68,48 @@ wss.on('connection', (ws) => {
         payload: userId
     });
 
+    if (rooms[roomId]) {
+        rooms[roomId].push(userId);
+    } else {
+        rooms[roomId] = [userId];
+    }
+
     // let others know that a new user joined the room, so they can send him offers
     broadcast(userId, {
         type: 'user-joined-room',
         source: userId
     });
+}
 
-    ws.on('message', (msg) => {
-        const msgJson: Message = JSON.parse(msg);
-        const source = msgJson.source;
-        if (msgJson.type !== 'new-ice-candidate') {
-            console.log(
-                '----------------------\n'
-                + msgJson.type + '\n'
-                + msgJson.source + '\n'
-                + msgJson.target
-            );
-            // console.log(JSON.stringify(msgJson, null, 2));
-        }
-        if (msgJson.target) {
-            sendToOneUser(msgJson.target, msg);
-        } else {
-            broadcast(source, msg);
-        }
-        // switch (msgJson.type) {
-        //     case "video-offer":
-        //         sendToOneUser(msgJson.target, msg);
-        //         break;
-        //     case "video-answer":
-        //         sendToOneUser(msgJson.target, msg);
-        //         break;
-        //     case "new-ice-candidate":
-        //         broadcast(source, msg);
-        //         break;
-        //     case "hang-up":
-        //         broadcast(source, msg);
-        //         break;
-        //     case "user-joined-room":
-        //         broadcast(source, msg);
-        //         break;
-        //     default:
-        //         console.log("unrecognised message:");
-        //         console.log(JSON.stringify(msgJson, null, 2));
-        //         break;
-        // }
-    });
-});
+// TODO: detect implicit disconnect by periodically sending ping signals.
+function handleDisconnect(source: string, msg: Message | string) {
+    // in case the disconnect was implicit (by exiting the browser), the client did not send
+    // a message, so we need to create one ourselves.
+    if (typeof msg === 'undefined') {
+        msg = {type: 'hang-up', source}
+    }
+    // let others know
+    broadcast(source, msg);
 
-// broadcast to everyone, but not back to the sender.
+    // delete from room
+    const room: string[] = rooms[clients[source].room];
+    if (room.length === 1) {
+        // delete entire room if user is the sole participant
+        delete rooms[clients[source].room];
+    } else {
+        room.splice(room.indexOf(source), 1);
+    }
+    // delete client
+    delete clients[source];
+}
+
+// broadcast to everyone in the same room, except the original sender.
 function broadcast(source: string, msg: string | Message) {
-    // for now, broadcast to all.
-    // normally should only be forwarded to people in the same room
-
+    const roomId = clients[source].room;
     const msgString: string = (typeof msg === 'object') ? JSON.stringify(msg) : msg;
-    Object.keys(clients).forEach((username) => {
-        if (username !== source) { // do not send back to source
-            clients[username].socket.send(msgString);
+    rooms[roomId].forEach((userId) => {
+        if (userId !== source) { // do not send back to source
+            clients[userId].socket.send(msgString);
         }
     });
 }
@@ -95,12 +119,20 @@ function sendToOneUser(target: string, msg: string | Message) {
     clients[target].socket.send(msgString);
 }
 
-// app.get("/", (req, res) => {
-//     res.redirect("room1");
-// });
-//
-// app.get("/:room", (req, res) => {
-//     res.render('room', {roomId: req.params.room});
-// });
-//
-// http.createServer(app).listen(port);
+app.use(express.static(join(__dirname, 'client')));
+
+app.get("/", (req, res) => {
+    res.sendFile(join(__dirname, '/client/main/index.html'));
+});
+
+app.get("/createRoom", (req, res) => {
+    res.redirect("/room/" + uuidv4());
+});
+
+app.get("/room/:room", (req, res) => {
+    res.sendFile(join(__dirname, '/client/room/room.html'));
+});
+
+http.createServer(app).listen(httpPort, () => {
+    console.log("http server listening on port %d", httpPort);
+});

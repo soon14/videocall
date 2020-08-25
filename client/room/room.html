@@ -3,22 +3,21 @@
 <head>
     <meta charset="UTF-8">
 
-    <link href="style.css" type="text/css" rel="stylesheet">
-    <title>Video-chat</title>
+    <link href="/room/style.css" type="text/css" rel="stylesheet">
+    <title>ChatRoom</title>
     <script>
-        var exports = {};
+        const exports = {}; // used to prevent runtime error when importing type definitions
     </script>
 </head>
 <body>
     <div id="root">
         <div id="video_container">
             <video id="local_video" autoplay muted></video>
-<!--            <video id="remote_video" autoplay></video>-->
         </div>
         <div id="button_container">
             <button id="hangup_button">hang up</button>
         </div>
     </div>
-    <script src="script.js"></script>
+    <script type="text/javascript" src="/room/script.js"></script>
 </body>
 </html>

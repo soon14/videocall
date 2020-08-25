@@ -2,7 +2,12 @@ export interface Clients {
     [userId: string]: {
         name: string;
         socket: WebSocket;
+        room: string;
     }
+}
+
+export interface Rooms {
+    [roomId: string]: string[]; // array of userId's
 }
 
 export interface Message {

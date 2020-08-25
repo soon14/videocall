@@ -1,19 +1,23 @@
-import {Message} from "../interfaces";
+import {Message} from "../../interfaces";
 
 interface PeerConnection {
     [key: string]:  RTCPeerConnection
 }
-const peerConnections: PeerConnection = {};
 
-// used by browser to request media
-const mediaConstraints = {audio: true, video: true};
+// local state
+const peerConnections: PeerConnection = {};
+let localUserId; // supplied by websocket during connect()
+let roomId = window.location.pathname.split('/')[2];
 
 let localStream; // initialized after navigator.mediaDevices.getUserMedia
-let localUserId; // initialized during() connect (supplied by server)
 let ws: WebSocket; // initialized during connect()
 
+// HTML references and event listeners
+const localVideoElement: HTMLVideoElement = document.getElementById("local_video") as HTMLVideoElement;
+document.getElementById("hangup_button").onclick = () => hangUpCall();
 
-navigator.mediaDevices.getUserMedia(mediaConstraints)
+// request video and audio from user
+navigator.mediaDevices.getUserMedia({audio: true, video: true})
     .then((stream) => {
         localStream = stream;
         localVideoElement.srcObject = localStream;
@@ -21,17 +25,22 @@ navigator.mediaDevices.getUserMedia(mediaConstraints)
     })
     .catch(handleError);
 
+// called after user has agreed to share video and audio
 function connect() {
     ws = new WebSocket("ws://localhost:3000");
     ws.onopen = () => {
         console.log("connected");
+        // let server know our roomId. The server will respond with a userId we can use.
+        sendToServer({type: "register", payload: roomId});
+
+        // event handlers
         ws.onmessage = (msg) => {
             const data: Message = JSON.parse(msg.data);
             console.log(data);
 
             switch (data.type) {
                 case "register":
-                    localUserId = data.payload;
+                    handleRegister(data);
                     break;
                 case "video-offer":
                     handleVideoOfferMsg(data);
@@ -53,21 +62,16 @@ function connect() {
     };
 }
 
-function sendToServer(msg) {
+function sendToServer(msg: Message) {
     ws.send(JSON.stringify(msg));
 }
 
-const localVideoElement: HTMLVideoElement = document.getElementById("local_video") as HTMLVideoElement;
-document.getElementById("hangup_button").onclick = () => hangUpCall();
-
-
+function handleRegister(msg: Message) {
+    localUserId = msg.payload;
+}
 
 function invite(remoteUserId) {
-    // TODO: replace with check if *specific* connection already exists (using remoteUserId)
-    // if (myPeerConnection) {
-    //     alert("peer connection already exists");
-    //     return;
-    // }
+    // TODO: check if specific connection already exists (using remoteUserId)
     const myPeerConnection = createPeerConnection(remoteUserId);
     localStream.getTracks().forEach(
         (track) => myPeerConnection.addTrack(track, localStream))
@@ -79,7 +83,7 @@ function createPeerConnection(remoteUserId) {
     const myPeerConnection = new RTCPeerConnection({
         iceServers: [] //{urls: "stun:stun.stunprotocol.org"}
     });
-
+    // save reference to peer connection
     peerConnections[remoteUserId] = myPeerConnection;
 
     // first three of these event handlers are required
@@ -170,7 +174,6 @@ function handleNewICECandidateMsg(msg: Message) {
 // called by RTCPeerConnection when remote user makes tracks available
 function handleTrackEvent(event, remoteUserId) {
     console.log("handleTrack");
-    console.log(remoteUserId);
     (document.getElementById(remoteUserId) as HTMLVideoElement).srcObject = event.streams[0];
 }
 
@@ -187,11 +190,13 @@ function hangUpCall() {
         type: "hang-up",
         source: localUserId
     });
+    window.location.href = "/";
 }
 
 function handleHangUp(msg: Message) {
     document.getElementById("video_container").removeChild(
         document.getElementById(msg.source));
+    delete peerConnections[msg.source];
 }
 
 // // resets the internal state

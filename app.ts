@@ -1,26 +1,58 @@
 import * as express from 'express';
 const app = express();
 import * as http from 'http';
+import * as https from 'https';
+import {readFileSync} from "fs";
 import * as WebSocket from 'ws';
 import {join} from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import {Clients, Message, Rooms} from "./interfaces";
 
 const socketPort = 3000;
-const httpPort = 8080;
+const httpsPort = 443;
+const httpPort = 80;
 
 const clients: Clients = {};
 const rooms: Rooms = {};
 
-const wss = new WebSocket.Server({port: socketPort});
+app.use(express.static(join(__dirname, 'client')));
+
+app.get("/", (req, res) => {
+    res.sendFile(join(__dirname, '/client/main/index.html'));
+});
+
+app.get("/createRoom", (req, res) => {
+    res.redirect("/room/" + uuidv4());
+});
+
+app.get("/room/:room", (req, res) => {
+    res.sendFile(join(__dirname, '/client/room/room.html'));
+});
+
+http.createServer((req, res) => {
+    res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url });
+    res.end();
+}).listen(httpPort);
+
+https.createServer({
+    key: readFileSync('server.key'),
+    cert: readFileSync('server.cert')
+}, app).listen(httpsPort, () => {
+    console.log("https server listening on port %d", httpsPort);
+});
+
+const httpsServer = https.createServer({
+    key: readFileSync('server.key'),
+    cert: readFileSync('server.cert')
+}).listen(socketPort);
+
+const wss = new WebSocket.Server({server: httpsServer});
 wss.on('listening', () => {
     console.log("websocket server listening on port %d", socketPort);
 });
 
 wss.on('connection', (ws) => {
     console.log("client connected");
-    console.log(clients);
-    console.log(rooms);
 
     ws.on('message', (msg) => {
         const msgJson: Message = JSON.parse(msg);
@@ -118,21 +150,3 @@ function sendToOneUser(target: string, msg: string | Message) {
     const msgString: string = (typeof msg === 'object') ? JSON.stringify(msg) : msg;
     clients[target].socket.send(msgString);
 }
-
-app.use(express.static(join(__dirname, 'client')));
-
-app.get("/", (req, res) => {
-    res.sendFile(join(__dirname, '/client/main/index.html'));
-});
-
-app.get("/createRoom", (req, res) => {
-    res.redirect("/room/" + uuidv4());
-});
-
-app.get("/room/:room", (req, res) => {
-    res.sendFile(join(__dirname, '/client/room/room.html'));
-});
-
-http.createServer(app).listen(httpPort, () => {
-    console.log("http server listening on port %d", httpPort);
-});

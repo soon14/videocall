@@ -11,8 +11,8 @@ Landing page:
 Room page:
     - Request video and audio stream from user.
     - If agreed by user, establish websocket connection.
-    - Server gives user an unique username.
     - User gives server the room it is trying to join.
+    - Server gives user an unique username.
     - Server stores user and adds him to participant list of the room.
     - Server broadcasts message to rest of the room the let them know someone has joined.
     - Other participants send new user a video-offer.
@@ -23,3 +23,4 @@ Hang up:
     - Server broadcasts the message to the other participants in the room.
     - Every participant removes its video html-element for that user,
         and removes the RTCPeerConnection from its list.
+    - Server deletes client and removes him from the room.

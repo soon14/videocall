@@ -27,7 +27,7 @@ navigator.mediaDevices.getUserMedia({audio: true, video: true})
 
 // called after user has agreed to share video and audio
 function connect() {
-    ws = new WebSocket("ws://localhost:3000");
+    ws = new WebSocket("wss://10.0.0.160:3000");
     ws.onopen = () => {
         console.log("connected");
         // let server know our roomId. The server will respond with a userId we can use.
@@ -232,7 +232,7 @@ function createRemoteVideoElement(remoteUserId) {
     document.getElementById("video_container").appendChild(videoElement);
 }
 
+const log = document.getElementById("log");
 function handleError(err) {
-    alert("error, see console log");
-    console.log(err);
+    log.innerText = log.innerText + "\n" + err;
 }

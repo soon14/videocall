@@ -16,6 +16,7 @@ const clients: Clients = {};
 const rooms: Rooms = {};
 
 app.use(express.static(join(__dirname, 'client')));
+app.use("/test_videos", express.static(join(__dirname, 'test_videos')));
 
 app.get("/", (req, res) => {
     res.sendFile(join(__dirname, '/client/main/index.html'));
@@ -29,24 +30,23 @@ app.get("/room/:room", (req, res) => {
     res.sendFile(join(__dirname, '/client/room/room.html'));
 });
 
-http.createServer((req, res) => {
-    res.writeHead(301, { "Location": "https://" + req.headers['host'] + req.url });
-    res.end();
-}).listen(httpPort);
-
-https.createServer({
-    key: readFileSync('server.key'),
-    cert: readFileSync('server.cert')
-}, app).listen(httpsPort, () => {
-    console.log("https server listening on port %d", httpsPort);
+http.createServer(app).listen(httpPort, () => {
+    console.log("http server started on port %d", httpPort);
 });
 
-const httpsServer = https.createServer({
-    key: readFileSync('server.key'),
-    cert: readFileSync('server.cert')
-}).listen(socketPort);
+// https.createServer({
+//     key: readFileSync('server.key'),
+//     cert: readFileSync('server.cert')
+// }, app).listen(httpsPort, () => {
+//     console.log("https server listening on port %d", httpsPort);
+// });
+//
+// const httpsServer = https.createServer({
+//     key: readFileSync('server.key'),
+//     cert: readFileSync('server.cert')
+// }).listen(socketPort);
 
-const wss = new WebSocket.Server({server: httpsServer});
+const wss = new WebSocket.Server({port: socketPort});
 wss.on('listening', () => {
     console.log("websocket server listening on port %d", socketPort);
 });

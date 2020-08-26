@@ -16,18 +16,18 @@ let ws: WebSocket; // initialized during connect()
 const localVideoElement: HTMLVideoElement = document.getElementById("local_video") as HTMLVideoElement;
 document.getElementById("hangup_button").onclick = () => hangUpCall();
 
-// request video and audio from user
-navigator.mediaDevices.getUserMedia({audio: true, video: true})
-    .then((stream) => {
-        localStream = stream;
-        localVideoElement.srcObject = localStream;
-        connect();
-    })
-    .catch(handleError);
+// // request video and audio from user
+// navigator.mediaDevices.getUserMedia({audio: true, video: true})
+//     .then((stream) => {
+//         localStream = stream;
+//         localVideoElement.srcObject = localStream;
+//         connect();
+//     })
+//     .catch(handleError);
 
 // called after user has agreed to share video and audio
 function connect() {
-    ws = new WebSocket("wss://10.0.0.160:3000");
+    ws = new WebSocket("ws://localhost:3000");
     ws.onopen = () => {
         console.log("connected");
         // let server know our roomId. The server will respond with a userId we can use.

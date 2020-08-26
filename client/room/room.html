@@ -12,7 +12,23 @@
 <body>
     <div id="root">
         <div id="video_container">
-            <video id="local_video" autoplay muted></video>
+            <video id="local_video" src="/test_videos/video_vertical.mp4" type="video/mp4" muted></video>
+            <video id="remote_video1"
+                   class="remote_video"
+                   src="/test_videos/video_vertical.mp4"
+                   type="video/mp4" autoplay muted></video>
+            <video id="remote_video4"
+                   class="remote_video"
+                   src="/test_videos/video_vertical.mp4"
+                   type="video/mp4" autoplay muted></video>
+            <video id="remote_video2"
+                   class="remote_video"
+                   src="/test_videos/video_horizontal.mp4"
+                   type="video/mp4" autoplay muted></video>
+            <video id="remote_video3"
+                   class="remote_video"
+                   src="/test_videos/video_horizontal.mp4"
+                   type="video/mp4" autoplay muted></video>
         </div>
         <div id="button_container">
             <button id="hangup_button">hang up</button>

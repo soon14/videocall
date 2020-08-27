@@ -55,7 +55,7 @@ function connect() {
                     invite(data.source);
                     break;
                 case "hang-up":
-                    handleHangUp(data);
+                    handleHangUp(data.source);
                     break;
             }
         };
@@ -92,10 +92,19 @@ function createPeerConnection(remoteUserId) {
     // onnegotiationneeded is not called in case of video-answer
     myPeerConnection.onnegotiationneeded = () => {handleNegotiationNeededEvent(myPeerConnection, remoteUserId)};
     // myPeerConnection.onremovetrack = handleRemoveTrackEvent;
-    // myPeerConnection.oniceconnectionstatechange = handleICEConnectionStateChangeEvent;
+    myPeerConnection.oniceconnectionstatechange = (event: RTCPeerConnectionIceEvent) => {handleICEConnectionStateChangeEvent(event, remoteUserId)};
     // myPeerConnection.onicegatheringstatechange = handleICEGatheringStateChangeEvent;
     // myPeerConnection.onsignalingstatechange = handleSignalingStateChangeEvent;
     return myPeerConnection;
+}
+
+function handleICEConnectionStateChangeEvent(event, remoteUserId) {
+    console.log("connection state change");
+    if (event.target.iceConnectionState === 'failed' || event.target.iceConnectionState === 'disconnected') {
+        console.log("remote client %d disconnected", remoteUserId);
+        handleHangUp(remoteUserId);
+    }
+    console.log(event);
 }
 
 // called by browser when it is ready to connect to peer, creates video-offer
@@ -193,10 +202,10 @@ function hangUpCall() {
     window.location.href = "/";
 }
 
-function handleHangUp(msg: Message) {
+function handleHangUp(source: string) {
     document.getElementById("video_container").removeChild(
-        document.getElementById(msg.source));
-    delete peerConnections[msg.source];
+        document.getElementById(source));
+    delete peerConnections[source];
 }
 
 function createRemoteVideoElement(remoteUserId) {

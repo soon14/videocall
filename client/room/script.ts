@@ -16,14 +16,14 @@ let ws: WebSocket; // initialized during connect()
 const localVideoElement: HTMLVideoElement = document.getElementById("local_video") as HTMLVideoElement;
 document.getElementById("hangup_button").onclick = () => hangUpCall();
 
-// // request video and audio from user
-// navigator.mediaDevices.getUserMedia({audio: true, video: true})
-//     .then((stream) => {
-//         localStream = stream;
-//         localVideoElement.srcObject = localStream;
-//         connect();
-//     })
-//     .catch(handleError);
+// request video and audio from user
+navigator.mediaDevices.getUserMedia({audio: true, video: true})
+    .then((stream) => {
+        localStream = stream;
+        localVideoElement.srcObject = localStream;
+        connect();
+    })
+    .catch(handleError);
 
 // called after user has agreed to share video and audio
 function connect() {
@@ -199,36 +199,11 @@ function handleHangUp(msg: Message) {
     delete peerConnections[msg.source];
 }
 
-// // resets the internal state
-// function closeVideoCall() {
-//     if (myPeerConnection) {
-//         myPeerConnection.onicecandidate = null;
-//         myPeerConnection.ontrack = null;
-//         myPeerConnection.onnegotiationneeded = null;
-//         // myPeerConnection.onremovetrack = null;
-//         // myPeerConnection.oniceconnectionstatechange = null;
-//         // myPeerConnection.onicegatheringstatechange = null;
-//         // myPeerConnection.onsignalingstatechange = null;
-//         if (remoteVideoElement.srcObject) {
-//             (remoteVideoElement.srcObject as MediaStream).getTracks().forEach(track => track.stop());
-//         }
-//         if (localVideoElement.srcObject) {
-//             (localVideoElement.srcObject as MediaStream).getTracks().forEach(track => track.stop());
-//         }
-//
-//         myPeerConnection.close();
-//         myPeerConnection = null;
-//     }
-//     remoteVideoElement.removeAttribute("src");
-//     remoteVideoElement.removeAttribute("srcObject");
-//     localVideoElement.removeAttribute("src");
-//     localVideoElement.removeAttribute("srcObject");
-// }
-
 function createRemoteVideoElement(remoteUserId) {
     const videoElement = document.createElement('video');
     videoElement.autoplay = true;
     videoElement.id = remoteUserId;
+    videoElement.className = "remote_video";
     document.getElementById("video_container").appendChild(videoElement);
 }
 

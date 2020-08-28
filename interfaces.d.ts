@@ -19,4 +19,4 @@ export interface Message {
     sdp?: RTCSessionDescriptionInit;
 }
 type messageType = 'video-offer' | 'video-answer' |
-    'new-ice-candidate' | 'hang-up' | 'user-joined-room' | 'register' | 'hang-up';
+    'new-ice-candidate' | 'user-joined-room' | 'register' | 'disconnect';

@@ -63,7 +63,7 @@ wss.on('connection', (ws) => {
             case "register":
                 handleRegister(ws, msgJson);
                 break;
-            case "hang-up":
+            case "disconnect":
                 handleDisconnect(source, msg);
                 break;
             // otherwise, simply forward message to other user(s)
@@ -118,7 +118,7 @@ function handleDisconnect(source: string, msg: Message | string) {
     // in case the disconnect was implicit (by exiting the browser), the client did not send
     // a message, so we need to create one ourselves.
     if (typeof msg === 'undefined') {
-        msg = {type: 'hang-up', source}
+        msg = {type: 'disconnect', source}
     }
     // let others know
     broadcast(source, msg);
@@ -132,6 +132,7 @@ function handleDisconnect(source: string, msg: Message | string) {
         room.splice(room.indexOf(source), 1);
     }
     // delete client
+    clients[source].socket.close();
     delete clients[source];
 }
 

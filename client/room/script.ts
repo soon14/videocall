@@ -17,13 +17,13 @@ const localVideoElement: HTMLVideoElement = document.getElementById("local_video
 document.getElementById("hangup_button").onclick = () => hangUpCall();
 
 // request video and audio from user
-navigator.mediaDevices.getUserMedia({audio: true, video: true})
-    .then((stream) => {
-        localStream = stream;
-        localVideoElement.srcObject = localStream;
-        connect();
-    })
-    .catch(handleError);
+// navigator.mediaDevices.getUserMedia({audio: true, video: true})
+//     .then((stream) => {
+//         localStream = stream;
+//         localVideoElement.srcObject = localStream;
+//         connect();
+//     })
+//     .catch(handleError);
 
 // called after user has agreed to share video and audio
 function connect() {
@@ -54,8 +54,8 @@ function connect() {
                 case "user-joined-room":
                     invite(data.source);
                     break;
-                case "hang-up":
-                    handleHangUp(data.source);
+                case "disconnect":
+                    handleDisconnect(data.source);
                     break;
             }
         };
@@ -102,7 +102,7 @@ function handleICEConnectionStateChangeEvent(event, remoteUserId) {
     console.log("connection state change");
     if (event.target.iceConnectionState === 'failed' || event.target.iceConnectionState === 'disconnected') {
         console.log("remote client %d disconnected", remoteUserId);
-        handleHangUp(remoteUserId);
+        handleDisconnect(remoteUserId);
     }
     console.log(event);
 }
@@ -196,15 +196,16 @@ function handleTrackEvent(event, remoteUserId) {
 
 function hangUpCall() {
     sendToServer({
-        type: "hang-up",
+        type: "disconnect",
         source: localUserId
     });
     window.location.href = "/";
 }
 
-function handleHangUp(source: string) {
+function handleDisconnect(source: string) {
     document.getElementById("video_container").removeChild(
         document.getElementById(source));
+    peerConnections[source].close();
     delete peerConnections[source];
 }
 

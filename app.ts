@@ -64,8 +64,7 @@ wss.on('connection', (ws) => {
                 handleRegister(ws, msgJson);
                 break;
             case "disconnect":
-                console.log("connection closed explicitly");
-                handleDisconnect(source, msg);
+                ws.close(); // this will call the "on close" event handler
                 break;
             // otherwise, simply forward message to other user(s)
             default:
@@ -77,7 +76,7 @@ wss.on('connection', (ws) => {
         }
     });
     ws.on('close', () => {
-        console.log("connection closed implicitly");
+        console.log("connection closed");
         handleDisconnect(ws.userId);
     });
 });
@@ -132,11 +131,11 @@ function handleDisconnect(source: string, msg?: Message | string) {
     const room: string[] = rooms[clients[source].room];
     if (room.length === 1) {
         // delete entire room if user is the sole participant
+        console.log("deleting room");
         delete rooms[clients[source].room];
     } else {
         room.splice(room.indexOf(source), 1);
     }
-    clients[source].socket.close();
     delete clients[source];
 }
 
@@ -155,4 +154,3 @@ function sendToOneUser(target: string, msg: string | Message) {
     const msgString: string = (typeof msg === 'object') ? JSON.stringify(msg) : msg;
     clients[target].socket.send(msgString);
 }
-

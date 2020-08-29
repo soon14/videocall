@@ -2,18 +2,7 @@
     margin: 0;
     width: 100%;
     height: 100%;
-
-    display: flex;
-    flex-flow: column wrap;
-    /*grid-template-rows: repeat(auto-fit, 100px);*/
-    /*grid-template-columns: repeat(auto-fit, minmax(300px, max-content));*/
-    /*grid-template-rows: repeat(auto-fit, minmax(min-content, 100%));*/
-    /*grid-auto-flow: dense;*/
-}
-
-#video_container2 {
-    display: flex;
-    flex-direction: row;
+    text-align: center;
 }
 
 html, body, div#root{
@@ -21,12 +10,13 @@ html, body, div#root{
     width: 100%;
     height: 100%;
     background-color: #131313;
+    color: white;
 }
 
 .remote_video {
     max-height: 100%;
     max-width: 100%;
-    flex-basis: 0;
+    /*flex-basis: 0;*/
     flex-shrink: 1;
     flex-grow: 1;
 }
@@ -45,7 +35,7 @@ html, body, div#root{
     transform: translate(-50%);
 }
 
-button {
+#disconnect {
     border-radius: 50px;
     border: 1px solid white;
     height: 80px;

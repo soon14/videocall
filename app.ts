@@ -64,6 +64,7 @@ wss.on('connection', (ws) => {
                 handleRegister(ws, msgJson);
                 break;
             case "disconnect":
+                console.log("connection closed explicitly");
                 handleDisconnect(source, msg);
                 break;
             // otherwise, simply forward message to other user(s)
@@ -74,15 +75,16 @@ wss.on('connection', (ws) => {
                     broadcast(source, msg);
                 }
         }
-
-
-
+    });
+    ws.on('close', () => {
+        console.log("connection closed implicitly");
+        handleDisconnect(ws.userId);
     });
 });
 
 function handleRegister(ws, msg) {
-    // if a user is trying to register himself by sending us his room id,
-    // which he extracted from his url, we need to process it
+    // a user is trying to register himself by sending us his room id,
+    // which he extracted from his url
     const roomId = msg.payload;
 
     // generate userId
@@ -93,6 +95,10 @@ function handleRegister(ws, msg) {
         socket: ws,
         room: roomId
     };
+
+    // IMPORTANT: store userId in socket object, so that we can quickly find the user
+    // when we receive an on-close message.
+    ws.userId = userId;
 
     // let client know his id
     sendToOneUser(userId, {
@@ -113,8 +119,7 @@ function handleRegister(ws, msg) {
     });
 }
 
-// TODO: detect implicit disconnect by periodically sending ping signals.
-function handleDisconnect(source: string, msg: Message | string) {
+function handleDisconnect(source: string, msg?: Message | string) {
     // in case the disconnect was implicit (by exiting the browser), the client did not send
     // a message, so we need to create one ourselves.
     if (typeof msg === 'undefined') {
@@ -131,7 +136,6 @@ function handleDisconnect(source: string, msg: Message | string) {
     } else {
         room.splice(room.indexOf(source), 1);
     }
-    // delete client
     clients[source].socket.close();
     delete clients[source];
 }
@@ -151,3 +155,4 @@ function sendToOneUser(target: string, msg: string | Message) {
     const msgString: string = (typeof msg === 'object') ? JSON.stringify(msg) : msg;
     clients[target].socket.send(msgString);
 }
+

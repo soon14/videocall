@@ -43,7 +43,11 @@ html, body, div#root{
     background-color: cyan;
 }
 
-#screenCapture:hover {
+#toggle_audio:hover {
+    background-color: blue;
+}
+
+#toggle_screen:hover {
     background-color: green;
 }
 

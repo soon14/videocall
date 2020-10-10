@@ -25,7 +25,7 @@ let ws: WebSocket; // initialized during connect()
 const localVideoElement: HTMLVideoElement = document.getElementById("local_video") as HTMLVideoElement;
 
 
-// request video and audio from user
+// request audio from user (do not connect to server if audio permission is not given)
 navigator.mediaDevices.getUserMedia({audio: true})
     .then((stream) => {
         audioStream = stream;
@@ -74,98 +74,6 @@ function connect() {
     };
 }
 
-/************* TOGGLE VIDEO *****************/
-function sendVideo(myPeerConnection) {
-    navigator.mediaDevices.getUserMedia({video: true})
-        .then((stream) => {
-            videoStream = stream;
-            localVideoElement.srcObject = stream;
-            const videoTrack = stream.getVideoTracks()[0];
-            if (myPeerConnection['videoSender']) { // if RTCRtpSender object already exists, replace the track
-                myPeerConnection['videoSender'].replaceTrack(videoTrack);
-            }
-            else {
-                myPeerConnection['videoSender'] = myPeerConnection.addTrack(videoTrack, localStream);
-            }
-            isVideoOn = true;
-        })
-        .catch(handleError);
-}
-
-function muteVideo(myPeerConnection) {
-    if (myPeerConnection['videoSender']) {
-        myPeerConnection.removeTrack(myPeerConnection['videoSender']);
-        myPeerConnection['videoSender'] = null;
-    }
-    isVideoOn = false;
-}
-
-document.getElementById("toggle_video").onclick = () => {
-    if (isVideoOn) {
-        console.log("turning off video...");
-        Object.values(peerConnections).forEach((myPeerConnection) => muteVideo(myPeerConnection));
-    }
-    else {
-        if (!isScreenSharing) {
-            console.log("turning on video...");
-            Object.values(peerConnections).forEach((myPeerConnection) => sendVideo(myPeerConnection));
-        }
-    }
-};
-
-/************ TOGGLE AUDIO *******************/
-function sendAudio(myPeerConnection) {
-    if (myPeerConnection['audioSender']) {
-        myPeerConnection['audioSender'].replaceTrack(audioStream.getAudioTracks()[0]);
-    }
-    else {
-        myPeerConnection['audioSender'] = myPeerConnection.addTrack(audioStream.getAudioTracks()[0], localStream);
-    }
-    isAudioOn = true;
-}
-
-function muteAudio(myPeerConnection) {
-    if (myPeerConnection['audioSender']) {
-        myPeerConnection.removeTrack(myPeerConnection['audioSender']);
-        myPeerConnection['audioSender'] = null;
-    }
-    isAudioOn = false;
-}
-
-document.getElementById("toggle_audio").onclick = () => {
-    if (isAudioOn) {
-        console.log("turning off audio...");
-        Object.values(peerConnections).forEach((myPeerConnection) => muteAudio(myPeerConnection));
-    }
-    else {
-        console.log("turning on audio...");
-        Object.values(peerConnections).forEach((myPeerConnection) => sendAudio(myPeerConnection));
-    }
-};
-
-/************** TOGGLE SCREEN SHARING *********************/
-document.getElementById("screenCapture").onclick = screenCapture;
-function screenCapture() {
-    console.log("capturing screen...");
-    (navigator.mediaDevices as any).getDisplayMedia({})
-        .then((stream) => {
-            localScreenStream = stream;
-            // share screen stream with all other participants
-        })
-        .catch(handleError);
-}
-
-function invite(remoteUserId) {
-    // TODO: check if specific connection already exists (using remoteUserId)
-    const myPeerConnection = createPeerConnection(remoteUserId);
-    if (isAudioOn) {
-        sendAudio(myPeerConnection);
-    }
-    if (isVideoOn) {
-        sendVideo(myPeerConnection);
-    }
-}
-
 // remoteUserId not supplied in case of creating peer connection as answer to a video offer
 function createPeerConnection(remoteUserId) {
     const myPeerConnection = new RTCPeerConnection({
@@ -186,7 +94,7 @@ function createPeerConnection(remoteUserId) {
     return myPeerConnection;
 }
 
-/******************** EVENT HANDLERS ***************************/
+/******************** RTCPEERCONNECTION EVENT HANDLERS ***************************/
 
 function handleICEConnectionStateChangeEvent(event, remoteUserId) {
     console.log("connection state change");
@@ -213,6 +121,54 @@ function handleNegotiationNeededEvent(myPeerConnection, remoteUserId) {
         .catch(handleError);
 }
 
+// called by RTCPeerConnection when remote user makes tracks available
+function handleTrackEvent(event, remoteUserId) {
+    console.log("handleTrack");
+    console.log(event);
+    const element: HTMLVideoElement = (document.getElementById(remoteUserId) as HTMLVideoElement);
+    element.srcObject = event.streams[0];
+    // if (element.srcObject) {
+    //     console.log((element.srcObject as MediaStream).getTracks());
+    //     (element.srcObject as MediaStream).addTrack(event.track);
+    // } else {
+    //     element.srcObject = new MediaStream([event.track]);
+    // }
+}
+
+
+// called by RTCPeerConnection when new ICE candidate is found for our network
+function handleICECandidateEvent(event, remoteUserId) {
+    if (event.candidate) {
+        // let others know of our candidate
+        sendToServer({
+            type: "new-ice-candidate",
+            source: localUserId,
+            target: remoteUserId,
+            candidate: event.candidate
+        });
+    }
+}
+
+// event handler for when remote user makes a potential ICE candidate known for his network
+function handleNewICECandidateMsg(msg: Message) {
+    if (peerConnections[msg.source]) {
+        peerConnections[msg.source].addIceCandidate(
+            new RTCIceCandidate(msg.candidate)
+        ).catch(handleError);
+    }
+}
+
+/************** SIGNALLING EVENT HANDLERS ************************/
+function invite(remoteUserId) {
+    // TODO: check if specific connection already exists (using remoteUserId)
+    const myPeerConnection = createPeerConnection(remoteUserId);
+    if (isAudioOn) {
+        sendAudio(myPeerConnection);
+    }
+    if (isVideoOn) {
+        sendVideo(myPeerConnection);
+    }
+}
 
 function handleMediaOffer(msg: Message) {
     console.log("handle media offer");
@@ -251,49 +207,127 @@ function handleMediaAnswer(msg: Message) {
     createRemoteVideoElement(msg.source);
 }
 
-// called by RTCPeerConnection when new ICE candidate is found for our network
-function handleICECandidateEvent(event, remoteUserId) {
-    if (event.candidate) {
-        // let others know of our candidate
-        sendToServer({
-            type: "new-ice-candidate",
-            source: localUserId,
-            target: remoteUserId,
-            candidate: event.candidate
-        });
+/************* TOGGLE VIDEO *****************/
+function sendVideo(myPeerConnection) {
+    // request the video stream, but be careful not to replace an existing screen capture stream.
+    navigator.mediaDevices.getUserMedia({video: true})
+        .then((stream) => {
+            videoStream = stream;
+            localVideoElement.srcObject = stream;
+
+            // do not replace screen capture
+            if (!isScreenSharing) {
+                const videoTrack = stream.getVideoTracks()[0];
+                if (myPeerConnection['videoSender']) { // if RTCRtpSender object already exists, replace the track
+                    console.log("replace track");
+                    myPeerConnection['videoSender'].replaceTrack(videoTrack);
+                } else {
+                    myPeerConnection['videoSender'] = myPeerConnection.addTrack(videoTrack, localStream);
+                }
+            }
+        })
+        .catch(handleError);
+}
+
+function muteVideo(myPeerConnection) {
+    if (myPeerConnection['videoSender']) {
+        myPeerConnection.removeTrack(myPeerConnection['videoSender']);
+        myPeerConnection['videoSender'] = null;
     }
 }
 
-// event handler for when remote user makes a potential ICE candidate known for his network
-function handleNewICECandidateMsg(msg: Message) {
-    if (peerConnections[msg.source]) {
-        peerConnections[msg.source].addIceCandidate(
-            new RTCIceCandidate(msg.candidate)
-        ).catch(handleError);
+const videoButton = document.getElementById("toggle_video");
+videoButton.onclick = () => {
+    if (isVideoOn) {
+        console.log("turning off video...");
+        Object.values(peerConnections).forEach((myPeerConnection) => muteVideo(myPeerConnection));
+        isVideoOn = false;
+        videoButton.innerText = "video [off]";
+    }
+    else {
+        if (!isScreenSharing) {
+            console.log("turning on video...");
+            Object.values(peerConnections).forEach((myPeerConnection) => sendVideo(myPeerConnection));
+            isVideoOn = true;
+            videoButton.innerText = "video [on]";
+        }
+    }
+};
+
+/************ TOGGLE AUDIO *******************/
+function sendAudio(myPeerConnection) {
+    if (myPeerConnection['audioSender']) {
+        myPeerConnection['audioSender'].replaceTrack(audioStream.getAudioTracks()[0]);
+    }
+    else {
+        myPeerConnection['audioSender'] = myPeerConnection.addTrack(audioStream.getAudioTracks()[0], localStream);
     }
 }
 
-// called by RTCPeerConnection when remote user makes tracks available
-function handleTrackEvent(event, remoteUserId) {
-    console.log("handleTrack");
-    console.log(event);
-    const element: HTMLVideoElement = (document.getElementById(remoteUserId) as HTMLVideoElement);
-    element.srcObject = event.streams[0];
-    // if (element.srcObject) {
-    //     console.log((element.srcObject as MediaStream).getTracks());
-    //     (element.srcObject as MediaStream).addTrack(event.track);
-    // } else {
-    //     element.srcObject = new MediaStream([event.track]);
-    // }
+function muteAudio(myPeerConnection) {
+    if (myPeerConnection['audioSender']) {
+        myPeerConnection.removeTrack(myPeerConnection['audioSender']);
+        myPeerConnection['audioSender'] = null;
+    }
 }
 
-// function handleRemoveTrackEvent(event) {
-//     // this function is called by the browser when tracks are removed from the receiving
-//     // video stream.
-//     if ((remoteVideoElement.srcObject as MediaStream).getTracks().length === 0) {
-//         // call has ended, reset the app
-//     }
-// }
+const audioButton = document.getElementById("toggle_audio");
+audioButton.onclick = () => {
+    if (isAudioOn) {
+        console.log("turning off audio...");
+        Object.values(peerConnections).forEach((myPeerConnection) => muteAudio(myPeerConnection));
+        isAudioOn = false;
+        audioButton.innerText = "audio [off]";
+    }
+    else {
+        console.log("turning on audio...");
+        Object.values(peerConnections).forEach((myPeerConnection) => sendAudio(myPeerConnection));
+        isAudioOn = true;
+        audioButton.innerText = "audio [on]";
+    }
+};
+
+/************** TOGGLE SCREEN SHARING *********************/
+function sendScreen(myPeerConnection) {
+    console.log("capturing screen...");
+    (navigator.mediaDevices as any).getDisplayMedia({})
+        .then((stream) => {
+            localScreenStream = stream;
+            const screenTrack = stream.getVideoTracks()[0];
+            if (myPeerConnection['videoSender']) { // if RTCRtpSender object already exists, replace the track
+                myPeerConnection['videoSender'].replaceTrack(screenTrack);
+            }
+            else {
+                myPeerConnection['videoSender'] = myPeerConnection.addTrack(screenTrack, localStream);
+            }
+        })
+        .catch(handleError);
+}
+
+function muteScreen(myPeerConnection) {
+    if (myPeerConnection['videoSender']) {
+        if (isVideoOn) {
+            myPeerConnection['videoSender'].replaceTrack(videoStream.getVideoTracks()[0]);
+        } else {
+            myPeerConnection.removeTrack(myPeerConnection['videoSender']);
+            myPeerConnection['videoSender'] = null;
+        }
+    }
+}
+
+const screenButton = document.getElementById("toggle_screen");
+screenButton.onclick = () => {
+    if (isScreenSharing) {
+        Object.values(peerConnections).forEach((myPeerConnection) => muteScreen(myPeerConnection));
+        isScreenSharing = false;
+        screenButton.innerText = "screen [off]"
+    }
+    else {
+        Object.values(peerConnections).forEach((myPeerConnection) => sendScreen(myPeerConnection));
+        isScreenSharing = true;
+        screenButton.innerText = "screen [on]"
+    }
+};
 
 /***************** DISCONNECT ****************************/
 

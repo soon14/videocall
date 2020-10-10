@@ -18,5 +18,5 @@ export interface Message {
     candidate?: RTCIceCandidateInit; // for ice candidates
     sdp?: RTCSessionDescriptionInit;
 }
-type messageType = 'video-offer' | 'video-answer' |
+type messageType = 'media-offer' | 'media-answer' |
     'new-ice-candidate' | 'user-joined-room' | 'register' | 'disconnect';

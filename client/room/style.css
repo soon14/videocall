@@ -35,11 +35,24 @@ html, body, div#root{
     transform: translate(-50%);
 }
 
-#disconnect {
-    border-radius: 50px;
-    border: 1px solid white;
-    height: 80px;
-    width: 80px;
+#disconnect:hover {
     background-color: red;
+}
+
+#toggle_video:hover {
+    background-color: cyan;
+}
+
+#screenCapture:hover {
+    background-color: green;
+}
+
+button {
+    border-radius: 50px;
+    border: 2px solid white;
+    height: 80px;
+    /*width: 80px;*/
+    background-color: transparent;
     color: white;
+    cursor: pointer;
 }

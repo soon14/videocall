@@ -4,26 +4,36 @@ interface PeerConnection {
     [key: string]:  RTCPeerConnection
 }
 
+// TODO: encapsulate everything
+
 // local state
 const peerConnections: PeerConnection = {};
 let localUserId; // supplied by websocket during connect()
 let roomId = window.location.pathname.split('/')[2];
 
-let localStream; // initialized after navigator.mediaDevices.getUserMedia
+let audioStream; // initialized after navigator.mediaDevices.getUserMedia
+let videoStream; // initialized after video toggle button is pressed
+let localStream = new MediaStream();
+let localScreenStream; // initialized after user clicks the button
+
+let isVideoOn: boolean = false;
+let isAudioOn: boolean = false;
+let isScreenSharing: boolean = false;
+
 let ws: WebSocket; // initialized during connect()
 
-// HTML references and event listeners
 const localVideoElement: HTMLVideoElement = document.getElementById("local_video") as HTMLVideoElement;
-document.getElementById("disconnect").onclick = () => hangUpCall();
+
 
 // request video and audio from user
-navigator.mediaDevices.getUserMedia({audio: true, video: true})
+navigator.mediaDevices.getUserMedia({audio: true})
     .then((stream) => {
-        localStream = stream;
-        localVideoElement.srcObject = localStream;
+        audioStream = stream;
+        isAudioOn = true;
         connect();
     })
     .catch(handleError);
+
 
 // called after user has agreed to share video and audio
 function connect() {
@@ -36,17 +46,19 @@ function connect() {
         // event handlers
         ws.onmessage = (msg) => {
             const data: Message = JSON.parse(msg.data);
-            console.log(data);
+            if (data.type != 'new-ice-candidate') {
+                console.log(data);
+            }
 
             switch (data.type) {
                 case "register":
                     handleRegister(data);
                     break;
-                case "video-offer":
-                    handleVideoOfferMsg(data);
+                case "media-offer":
+                    handleMediaOffer(data);
                     break;
-                case "video-answer":
-                    handleVideoAnswerMsg(data);
+                case "media-answer":
+                    handleMediaAnswer(data);
                     break;
                 case "new-ice-candidate":
                     handleNewICECandidateMsg(data);
@@ -62,20 +74,96 @@ function connect() {
     };
 }
 
-function sendToServer(msg: Message) {
-    ws.send(JSON.stringify(msg));
+/************* TOGGLE VIDEO *****************/
+function sendVideo(myPeerConnection) {
+    navigator.mediaDevices.getUserMedia({video: true})
+        .then((stream) => {
+            videoStream = stream;
+            localVideoElement.srcObject = stream;
+            const videoTrack = stream.getVideoTracks()[0];
+            if (myPeerConnection['videoSender']) { // if RTCRtpSender object already exists, replace the track
+                myPeerConnection['videoSender'].replaceTrack(videoTrack);
+            }
+            else {
+                myPeerConnection['videoSender'] = myPeerConnection.addTrack(videoTrack, localStream);
+            }
+            isVideoOn = true;
+        })
+        .catch(handleError);
 }
 
-function handleRegister(msg: Message) {
-    localUserId = msg.payload;
+function muteVideo(myPeerConnection) {
+    if (myPeerConnection['videoSender']) {
+        myPeerConnection.removeTrack(myPeerConnection['videoSender']);
+        myPeerConnection['videoSender'] = null;
+    }
+    isVideoOn = false;
+}
+
+document.getElementById("toggle_video").onclick = () => {
+    if (isVideoOn) {
+        console.log("turning off video...");
+        Object.values(peerConnections).forEach((myPeerConnection) => muteVideo(myPeerConnection));
+    }
+    else {
+        if (!isScreenSharing) {
+            console.log("turning on video...");
+            Object.values(peerConnections).forEach((myPeerConnection) => sendVideo(myPeerConnection));
+        }
+    }
+};
+
+/************ TOGGLE AUDIO *******************/
+function sendAudio(myPeerConnection) {
+    if (myPeerConnection['audioSender']) {
+        myPeerConnection['audioSender'].replaceTrack(audioStream.getAudioTracks()[0]);
+    }
+    else {
+        myPeerConnection['audioSender'] = myPeerConnection.addTrack(audioStream.getAudioTracks()[0], localStream);
+    }
+    isAudioOn = true;
+}
+
+function muteAudio(myPeerConnection) {
+    if (myPeerConnection['audioSender']) {
+        myPeerConnection.removeTrack(myPeerConnection['audioSender']);
+        myPeerConnection['audioSender'] = null;
+    }
+    isAudioOn = false;
+}
+
+document.getElementById("toggle_audio").onclick = () => {
+    if (isAudioOn) {
+        console.log("turning off audio...");
+        Object.values(peerConnections).forEach((myPeerConnection) => muteAudio(myPeerConnection));
+    }
+    else {
+        console.log("turning on audio...");
+        Object.values(peerConnections).forEach((myPeerConnection) => sendAudio(myPeerConnection));
+    }
+};
+
+/************** TOGGLE SCREEN SHARING *********************/
+document.getElementById("screenCapture").onclick = screenCapture;
+function screenCapture() {
+    console.log("capturing screen...");
+    (navigator.mediaDevices as any).getDisplayMedia({})
+        .then((stream) => {
+            localScreenStream = stream;
+            // share screen stream with all other participants
+        })
+        .catch(handleError);
 }
 
 function invite(remoteUserId) {
     // TODO: check if specific connection already exists (using remoteUserId)
     const myPeerConnection = createPeerConnection(remoteUserId);
-    localStream.getTracks().forEach(
-        (track) => myPeerConnection.addTrack(track, localStream))
-
+    if (isAudioOn) {
+        sendAudio(myPeerConnection);
+    }
+    if (isVideoOn) {
+        sendVideo(myPeerConnection);
+    }
 }
 
 // remoteUserId not supplied in case of creating peer connection as answer to a video offer
@@ -91,12 +179,14 @@ function createPeerConnection(remoteUserId) {
     myPeerConnection.ontrack = (event) => handleTrackEvent(event, remoteUserId);
     // onnegotiationneeded is not called in case of video-answer
     myPeerConnection.onnegotiationneeded = () => {handleNegotiationNeededEvent(myPeerConnection, remoteUserId)};
-    // myPeerConnection.onremovetrack = handleRemoveTrackEvent;
+    (myPeerConnection as any).onremovetrack = () => {alert("nigger")};
     myPeerConnection.oniceconnectionstatechange = (event: RTCPeerConnectionIceEvent) => {handleICEConnectionStateChangeEvent(event, remoteUserId)};
     // myPeerConnection.onicegatheringstatechange = handleICEGatheringStateChangeEvent;
     // myPeerConnection.onsignalingstatechange = handleSignalingStateChangeEvent;
     return myPeerConnection;
 }
+
+/******************** EVENT HANDLERS ***************************/
 
 function handleICEConnectionStateChangeEvent(event, remoteUserId) {
     console.log("connection state change");
@@ -114,7 +204,7 @@ function handleNegotiationNeededEvent(myPeerConnection, remoteUserId) {
         .then((offer) => {return myPeerConnection.setLocalDescription(offer)})
         .then(() => {
             sendToServer({
-                type: "video-offer",
+                type: "media-offer",
                 source: localUserId,
                 target: remoteUserId,
                 sdp: myPeerConnection.localDescription
@@ -123,40 +213,43 @@ function handleNegotiationNeededEvent(myPeerConnection, remoteUserId) {
         .catch(handleError);
 }
 
-// receiving a video-offer from another client
-function handleVideoOfferMsg(msg: Message) {
-    const myPeerConnection = createPeerConnection(msg.source);
-    createRemoteVideoElement(msg.source);
+
+function handleMediaOffer(msg: Message) {
+    console.log("handle media offer");
+
+    let myPeerConnection = peerConnections[msg.source];
+    if (myPeerConnection == null) {
+        myPeerConnection = createPeerConnection(msg.source);
+    }
     myPeerConnection
         .setRemoteDescription(new RTCSessionDescription(msg.sdp))
-        // prepare local video + audio stream
         .then(() => {
-            // give our peer access to our stream by adding a track
-            localStream.getTracks().forEach(
-                track => myPeerConnection.addTrack(track, localStream))
+            if (isAudioOn) {
+                sendAudio(myPeerConnection);
+            }
+            if (isVideoOn) {
+                sendVideo(myPeerConnection);
+            }
         })
-        // create answer, so that peer can accept our stream as well
         .then(() => {return myPeerConnection.createAnswer()})
         .then((answer) => {return myPeerConnection.setLocalDescription(answer)})
         .then(() => {
             sendToServer({
-                type: "video-answer",
+                type: "media-answer",
                 source: localUserId,
                 target: msg.source,
                 sdp: myPeerConnection.localDescription
             });
         })
         .catch(handleError);
+    createRemoteVideoElement(msg.source);
+
 }
 
-// handle video-answer message
-function handleVideoAnswerMsg(msg: Message) {
+function handleMediaAnswer(msg: Message) {
     peerConnections[msg.source].setRemoteDescription(new RTCSessionDescription(msg.sdp));
     createRemoteVideoElement(msg.source);
 }
-
-
-
 
 // called by RTCPeerConnection when new ICE candidate is found for our network
 function handleICECandidateEvent(event, remoteUserId) {
@@ -183,7 +276,15 @@ function handleNewICECandidateMsg(msg: Message) {
 // called by RTCPeerConnection when remote user makes tracks available
 function handleTrackEvent(event, remoteUserId) {
     console.log("handleTrack");
-    (document.getElementById(remoteUserId) as HTMLVideoElement).srcObject = event.streams[0];
+    console.log(event);
+    const element: HTMLVideoElement = (document.getElementById(remoteUserId) as HTMLVideoElement);
+    element.srcObject = event.streams[0];
+    // if (element.srcObject) {
+    //     console.log((element.srcObject as MediaStream).getTracks());
+    //     (element.srcObject as MediaStream).addTrack(event.track);
+    // } else {
+    //     element.srcObject = new MediaStream([event.track]);
+    // }
 }
 
 // function handleRemoveTrackEvent(event) {
@@ -193,6 +294,10 @@ function handleTrackEvent(event, remoteUserId) {
 //         // call has ended, reset the app
 //     }
 // }
+
+/***************** DISCONNECT ****************************/
+
+document.getElementById("disconnect").onclick = () => hangUpCall();
 
 function hangUpCall() {
     sendToServer({
@@ -213,20 +318,26 @@ function handleDisconnect(source: string) {
     delete peerConnections[source];
 }
 
-function createRemoteVideoElement(remoteUserId) {
-    const videoElements = document.getElementsByClassName("remote_video");
-    let [low, high] = calcGridDimensions(videoElements.length + 1);
-    resizeVideos(videoElements, low, high);
+/********************* VIDEO ELEMENT STUFF **********************************/
 
-    const videoElement = document.createElement('video');
-    videoElement.autoplay = true;
-    videoElement.id = remoteUserId;
-    videoElement.className = "remote_video";
-    videoElement.style.width = (100 / low) + "%";
-    videoElement.style.height = (100 / high) + "%";
-    // videoElement.src = "/test_videos/video_vertical.mp4";
-    // videoElement.canPlayType("video/mp4");
-    document.getElementById("video_container").appendChild(videoElement);
+function createRemoteVideoElement(remoteUserId) {
+    if (document.getElementById(remoteUserId) == null) {
+        console.log("creating video element");
+
+        const videoElements = document.getElementsByClassName("remote_video");
+        let [low, high] = calcGridDimensions(videoElements.length + 1);
+        resizeVideos(videoElements, low, high);
+
+        const videoElement = document.createElement('video');
+        videoElement.autoplay = true;
+        videoElement.id = remoteUserId;
+        videoElement.className = "remote_video";
+        videoElement.style.width = (100 / low) + "%";
+        videoElement.style.height = (100 / high) + "%";
+        // videoElement.src = "/test_videos/video_vertical.mp4";
+        // videoElement.canPlayType("video/mp4");
+        document.getElementById("video_container").appendChild(videoElement);
+    }
 }
 
 // Used in combination with calcLargestFactors().
@@ -272,6 +383,13 @@ window.onresize = () => {
     }
 };
 
+function sendToServer(msg: Message) {
+    ws.send(JSON.stringify(msg));
+}
+
+function handleRegister(msg: Message) {
+    localUserId = msg.payload;
+}
 
 function handleError(err) {
     console.log(err);

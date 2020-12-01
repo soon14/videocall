@@ -127,22 +127,31 @@ function handleRegister(ws, msg) {
 function handleDisconnect(source: string, msg?: Message | string) {
   // in case the disconnect was implicit (by exiting the browser), the client did not send
   // a message, so we need to create one ourselves.
+  let explicitDisconnect = true;
+  let roomId = clients[source].room;
   if (typeof msg === "undefined") {
+    explicitDisconnect = false;
+    console.log(`No message was sent at disconnect for user ${source}`, 
+      `wait five minutes before sending the disconnect message to room ${roomId}`);
     msg = { type: "disconnect", source };
   }
   // let others know
   broadcast(source, msg);
-
+  
+  let timeout = explicitDisconnect ? 0 : 300000;
+  setTimeout(() => {
   // delete from room
-  const room: string[] = rooms[clients[source].room];
-  if (room.length === 1) {
-    // delete entire room if user is the sole participant
-    console.log(`deleting room ${rooms[clients[source].room]}`);
-    delete rooms[clients[source].room];
-  } else {
-    room.splice(room.indexOf(source), 1);
-  }
-  delete clients[source];
+  const room: string[] = rooms[roomId];
+    if (room.length === 1) {
+      // delete entire room if user is the sole participant
+      console.log(`deleting room ${roomId}`);
+      delete rooms[roomId];
+    } else {
+      console.log(`After disconnect of ${source} there are still ${room.length - 1} users in room ${roomId}`);
+      room.splice(room.indexOf(source), 1);
+    }
+    delete clients[source];
+  }, timeout);
 }
 
 // broadcast to everyone in the same room, except the original sender.

@@ -3,8 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "tsc app.ts && node app.js",
-    "compile-client": "tsc -w client/room/script.ts"
+    "start":          "tsc app.ts && node app.js",
+    "compile-client": "tsc -w client/room/script.ts",
+    "compile":        "tsc app.ts client/room/script.ts"
   },
   "dependencies": {
     "@types/node": "^14.6.0",

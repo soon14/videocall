@@ -38,8 +38,7 @@ navigator.mediaDevices
 
 // called after user has agreed to share video and audio
 function connect() {
-  // wss://${location.host}/videocall/socket (for production)
-  ws = new WebSocket(`ws://localhost:3000`);
+  ws = new WebSocket(`wss://${location.host}/videocall/socket`);
   ws.onopen = () => {
     console.log("connected");
     // let server know our roomId. The server will respond with a userId we can use.
@@ -80,7 +79,8 @@ function connect() {
 function createPeerConnection(remoteUserId) {
   const myPeerConnection = new RTCPeerConnection({
     iceServers: [
-      { urls: "stun:stun.l.google.com:19302" }
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun.voys.nl:3478" },
     ], //{urls: "stun:stun.stunprotocol.org"}
   });
   // save reference to peer connection
@@ -394,7 +394,7 @@ function hangUpCall() {
     type: "disconnect",
     source: localUserId,
   });
-  window.location.href = "/"; // /videocall in production
+  window.location.href = "/videocall";
 }
 
 function handleDisconnect(source: string) {

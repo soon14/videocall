@@ -1,4 +1,5 @@
 #!/bin/bash
+# Replaces the old chat room container with a new one
 
 IMAGE_NAME=victor/video-call
 CONTAINER_NAME=victor-video-call

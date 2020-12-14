@@ -2,5 +2,7 @@
 client/script.js
 node_modules/
 *.js
+!webpack.config.js
 *.map
 ideas.txt
+client/build

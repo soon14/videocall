@@ -15,15 +15,14 @@ const httpPort = 8080;
 const clients: Clients = {};
 const rooms: Rooms = {};
 
-app.use(express.static(join(__dirname, "client")));
-app.use("/test_videos", express.static(join(__dirname, "test_videos")));
+app.use(express.static(join(__dirname, "client/build")));
 
 app.get("/", (req, res) => {
   res.redirect("/index.html");
 });
 
 app.get("/index.html", (req, res) => {
-  res.sendFile(join(__dirname, "/client/main/index.html"));
+  res.sendFile(join(__dirname, "/client/build/main/index.html"));
 });
 
 app.get("/createRoom", (req, res) => {
@@ -31,24 +30,12 @@ app.get("/createRoom", (req, res) => {
 });
 
 app.get("/room/:room", (req, res) => {
-  res.sendFile(join(__dirname, "/client/room/room.html"));
+  res.sendFile(join(__dirname, "/client/build/room/room.html"));
 });
 
 http.createServer(app).listen(httpPort, () => {
   console.log("http server started on port %d", httpPort);
 });
-
-// https.createServer({
-//     key: readFileSync('server.key'),
-//     cert: readFileSync('server.cert')
-// }, app).listen(httpsPort, () => {
-//     console.log("https server listening on port %d", httpsPort);
-// });
-//
-// const httpsServer = https.createServer({
-//     key: readFileSync('server.key'),
-//     cert: readFileSync('server.cert')
-// }).listen(socketPort);
 
 const wss = new WebSocket.Server({ port: socketPort });
 wss.on("listening", () => {
@@ -68,7 +55,7 @@ wss.on("connection", (ws) => {
         handleRegister(ws, msgJson);
         break;
       case "disconnect":
-        ws.close(); // this will call the "on close" event handler
+        handleDisconnect(msgJson.source, msgJson);
         break;
       // otherwise, simply forward message to other user(s)
       default:
@@ -80,15 +67,46 @@ wss.on("connection", (ws) => {
     }
   });
   ws.on("close", () => {
-    console.log("connection closed");
-    handleDisconnect(ws.userId);
+    if (clients[ws.userId]) {
+      console.log("lost connection with " + ws.userId);
+
+      const timeout = 5000; // allow 5 seconds for the user to reconnect
+      const disconnectTimer = setTimeout(() => {
+        handleDisconnect(ws.userId);
+      }, timeout);
+      // IMPORTANT: add disconnectTimer to ws object, because I'm too lazy to keep this separate somewhere else.
+      clients[ws.userId].disconnectTimer = disconnectTimer;
+    }
   });
 });
+
 
 function handleRegister(ws, msg) {
   // a user is trying to register himself by sending us his room id,
   // which he extracted from his url
   const roomId = msg.payload;
+
+  // In case the client is trying to reconnect, he will supply his last known userId.
+  // If he was in time, we still have him in memory.
+  if (msg.source && clients[msg.source]) {
+    console.log("reconnected user " + msg.source);
+
+    // update websocket object associated with this client
+    clients[msg.source].socket = ws;
+
+    // bind userId to WebSocket object
+    // (this also happens when registering new users)
+    ws.userId = msg.source;
+
+    // clear disconnectTimer if present (should be present from ws.close event handler)
+    if (clients[msg.source].disconnectTimer) {
+      clearTimeout(clients[msg.source].disconnectTimer);
+      clients[msg.source].disconnectTimer = null;
+    }
+    return;
+  }
+
+  // If the client is too late to reconnect (or this is a new user), register him properly.
 
   // generate userId
   const userId = uuidv4();
@@ -97,6 +115,7 @@ function handleRegister(ws, msg) {
     name: userId, // can be changed later by the user to something more readable
     socket: ws,
     room: roomId,
+    disconnectTimer: null,
   };
 
   // IMPORTANT: store userId in socket object, so that we can quickly find the user
@@ -114,7 +133,7 @@ function handleRegister(ws, msg) {
     console.log(`added user ${userId} to room ${roomId}`);
   } else {
     rooms[roomId] = [userId];
-    console.log(`created room ${roomId}`);
+    console.log(`created room ${roomId} with user ${userId}`);
   }
 
   // let others know that a new user joined the room, so they can send him offers
@@ -125,33 +144,34 @@ function handleRegister(ws, msg) {
 }
 
 function handleDisconnect(source: string, msg?: Message | string) {
+  console.log("disconnecting user " + source);
+
   // in case the disconnect was implicit (by exiting the browser), the client did not send
   // a message, so we need to create one ourselves.
   let explicitDisconnect = true;
   let roomId = clients[source].room;
   if (typeof msg === "undefined") {
     explicitDisconnect = false;
-    console.log(`No message was sent at disconnect for user ${source}`, 
-      `wait five minutes before sending the disconnect message to room ${roomId}`);
     msg = { type: "disconnect", source };
   }
   // let others know
   broadcast(source, msg);
   
-  let timeout = explicitDisconnect ? 0 : 300000;
-  setTimeout(() => {
-  // delete from room
+  // Free up resources:
+
+  // room is a string array of users in this room
   const room: string[] = rooms[roomId];
-    if (room.length === 1) {
-      // delete entire room if user is the sole participant
-      console.log(`deleting room ${roomId}`);
-      delete rooms[roomId];
-    } else {
-      console.log(`After disconnect of ${source} there are still ${room.length - 1} users in room ${roomId}`);
-      room.splice(room.indexOf(source), 1);
-    }
-    delete clients[source];
-  }, timeout);
+
+  if (room.length === 1) {
+    // delete entire room if user is the sole participant
+    console.log(`deleting room ${roomId}`);
+    delete rooms[roomId];
+  } else {
+    console.log(`After disconnect of ${source} there are still ${room.length - 1} users in room ${roomId}`);
+    room.splice(room.indexOf(source), 1);
+  }
+  // finally, delete client
+  delete clients[source];
 }
 
 // broadcast to everyone in the same room, except the original sender.
@@ -162,7 +182,6 @@ function broadcast(source: string, msg: string | Message) {
     if (userId !== source) {
       // do not send back to source
       clients[userId].socket.send(msgString);
-      console.log(`sending join msg to user ${userId}`);
     }
   });
 }

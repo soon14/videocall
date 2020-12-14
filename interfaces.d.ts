@@ -3,6 +3,7 @@ export interface Clients {
         name: string;
         socket: WebSocket;
         room: string;
+        disconnectTimer: TimeOut; // id returned by setTimeOut()
     }
 }
 

@@ -25,14 +25,57 @@ html, body, div#root{
     position: fixed;
     right: 0;
     top: 0;
-    width: 10em;
+    width: 10%;
 }
 
 #button_container {
+    z-index: 100;
     position: fixed;
-    bottom: 10px;
-    left: 50%;
-    transform: translate(-50%);
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 10%;
+    /* transform: translate(-50%); */
+}
+
+button {
+    /* border-radius: 50px; */
+    border: 2px solid white;
+    height: 100%;
+    width: 23%;
+    background-color: transparent;
+    color: white;
+    cursor: pointer;
+}
+
+@media screen and (min-width: 721px) {
+    #button_container {
+        z-index: 100;
+        position: fixed;
+        bottom: 10px;
+        left: 50%;
+        transform: translate(-50%);
+        width: auto;
+        height: auto;
+    }
+
+    button {
+        border-radius: 50px;
+        border: 2px solid white;
+        height: 80px;
+        width: auto;
+        background-color: transparent;
+        color: white;
+        cursor: pointer;
+    }
+}
+
+#toggle_log {
+    height: 3em;
+    width: 3em;
+    position: fixed;
+    top: 0;
+    left: 0;
 }
 
 #disconnect:hover {
@@ -51,12 +94,21 @@ html, body, div#root{
     background-color: green;
 }
 
-button {
-    border-radius: 50px;
-    border: 2px solid white;
-    height: 80px;
-    /*width: 80px;*/
-    background-color: transparent;
+#log {
+    display: none;
+    position: fixed;
+    top: 3em;
+    left: 0;
+    width: 100%;
+    height: 90%;
+    overflow-y: auto;
     color: white;
-    cursor: pointer;
+    margin: 0;
+    padding: 0;
+}
+
+.logEntry {
+    width: 100%;
+    margin: 0;
+    padding: 0;
 }

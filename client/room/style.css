@@ -25,7 +25,7 @@ html, body, div#root{
     position: fixed;
     right: 0;
     top: 0;
-    width: 10%;
+    width: 15%;
 }
 
 #button_container {
@@ -36,19 +36,20 @@ html, body, div#root{
     width: 100%;
     height: 10%;
     /* transform: translate(-50%); */
+    display: flex;
 }
 
 button {
     /* border-radius: 50px; */
     border: 2px solid white;
     height: 100%;
-    width: 23%;
     background-color: transparent;
     color: white;
     cursor: pointer;
+    flex: 1;
 }
 
-@media screen and (min-width: 721px) {
+/* @media screen and (min-width: 721px) {
     #button_container {
         z-index: 100;
         position: fixed;
@@ -68,7 +69,7 @@ button {
         color: white;
         cursor: pointer;
     }
-}
+} */
 
 #toggle_log {
     height: 3em;
@@ -100,7 +101,7 @@ button {
     top: 3em;
     left: 0;
     width: 100%;
-    height: 90%;
+    height: calc(90% - 3em);
     overflow-y: auto;
     color: white;
     margin: 0;

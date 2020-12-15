@@ -4,7 +4,7 @@ export function createRemoteVideoElement(remoteUserId) {
   
       const videoElements = document.getElementsByClassName("remote_video");
       let [low, high] = calcGridDimensions(videoElements.length + 1);
-      resizeVideos(videoElements, low, high);
+      console.log(low, high);
   
       const videoElement = document.createElement("video");
       videoElement.autoplay = true;
@@ -15,6 +15,18 @@ export function createRemoteVideoElement(remoteUserId) {
       // videoElement.src = "/test_videos/video_vertical.mp4";
       // videoElement.canPlayType("video/mp4");
       document.getElementById("video_container").appendChild(videoElement);
+      resizeVideos(videoElements, low, high);
+
+      // const nameElement = document.createElement("p");
+      // nameElement.id = remoteUserId + "_name";
+      // // nameElement.className = "remote_name_overlay";
+      // nameElement.style.width = 100 / low + "%";
+      // nameElement.style.height = 100 / high + "%";
+      // nameElement.style.position = "relative";
+      // nameElement.style.top = "-" + 100 / low + "%";
+      // // nameElement.style.left = "-" + 100 / high + "%";
+      // nameElement.innerText = remoteUserId;
+      // document.getElementById("video_container").appendChild(nameElement);
     }
   }
   

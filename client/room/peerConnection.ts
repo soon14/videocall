@@ -66,7 +66,15 @@ export function createPeerConnection(remoteUserId) {
     const element: HTMLVideoElement = document.getElementById(
       remoteUserId
     ) as HTMLVideoElement;
-    element.srcObject = event.streams[0];
+    if (event.streams[0]) {
+      if (event.streams[0].isActive === false) {
+        element.srcObject = null;
+      }
+      else {
+        element.srcObject = event.streams[0];
+      }
+    }
+    
     // if (element.srcObject) {
     //     console.log((element.srcObject as MediaStream).getTracks());
     //     (element.srcObject as MediaStream).addTrack(event.track);
@@ -137,7 +145,11 @@ export function createPeerConnection(remoteUserId) {
           sdp: myPeerConnection.localDescription,
         });
       })
-      .catch(handleError);
+      // TODO: revert this catch block once you've figured out why the sdp error occurs
+      .catch((error) => {
+        log(msg.sdp.sdp); // Failed to set remote video description send parameters for m-section with mid='0'});
+        handleError(error);
+      });
     createRemoteVideoElement(msg.source);
   }
   

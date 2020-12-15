@@ -11,10 +11,11 @@ export function log(msg) {
 
 document.getElementById("toggle_log").onclick = (event) => {
     const log = document.getElementById("log");
-    if (log.style.display === 'none') {
-        log.style.display = 'block';
+    console.log();
+    if (log.style.display === 'block') {
+        log.style.display = 'none';
     }
     else {
-        log.style.display = 'none';
+        log.style.display = 'block';
     }
 };

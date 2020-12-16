@@ -172,6 +172,8 @@ export function createPeerConnection(remoteUserId) {
   export function handleDisconnect(source: string) {
     log("user " + source + " left the room");
     removeVideo(source);
-    peerConnections[source].close();
-    delete peerConnections[source];
+    if (peerConnections[source]) {
+      peerConnections[source].close();
+      delete peerConnections[source];
+    }
   }

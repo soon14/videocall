@@ -1,6 +1,6 @@
 import { handleMediaOffer, handleMediaAnswer, handleNewICECandidateMsg, invite, handleDisconnect } from "./peerConnection";
 import { Message } from "../../interfaces";
-import { log, handleError } from "./debug";
+import { log, handleError, updateConnectionStatus } from "./debug";
 
 let ws: WebSocket;
 const roomId = window.location.pathname.split("/").pop();
@@ -13,7 +13,7 @@ window.onload = () => {
 function connect() {
   ws = new WebSocket(`wss://${location.host}/videocall/socket`);
   ws.onopen = () => {
-    log("connected");
+    updateConnectionStatus(true);
 
     // If this is the first time we connect, we need a userId.
     // Otherwise, simply reconnect and keep using old userId.
@@ -50,10 +50,13 @@ function connect() {
       // https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent
       console.log(event); // usual reason code: 1006
       
-      log("reconnecting...");
+      updateConnectionStatus(false);
       // TODO: disable toggle functions when we are not connected!
       // Keep a boolean state for connected?
-      setTimeout(connect, 500);
+
+      // immediately try to reconnect
+      connect();
+      // setTimeout(connect, 500);
     };
   };
 }

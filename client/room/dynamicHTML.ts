@@ -79,11 +79,13 @@ export function createRemoteVideoElement(remoteUserId) {
   
 
   export function removeVideo(source: string) {
-    const videoElements = document.getElementsByClassName("remote_video");
-    let [low, high] = calcGridDimensions(videoElements.length - 1);
-    resizeVideos(videoElements, low, high);
-  
-    document
-      .getElementById("video_container")
-      .removeChild(document.getElementById(source));
+    if (document.getElementById(source)) {
+      const videoElements = document.getElementsByClassName("remote_video");
+      let [low, high] = calcGridDimensions(videoElements.length - 1);
+      resizeVideos(videoElements, low, high);
+    
+      document
+        .getElementById("video_container")
+        .removeChild(document.getElementById(source));
+    }
   }

@@ -113,3 +113,11 @@ button {
     margin: 0;
     padding: 0;
 }
+
+#connection_status {
+    position: fixed;
+    top: 0;
+    left: 4em;
+    top: 1em;
+    font-weight: 900;
+}

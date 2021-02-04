@@ -17,8 +17,9 @@ html, body, div#root{
     max-height: 100%;
     max-width: 100%;
     /*flex-basis: 0;*/
-    flex-shrink: 1;
-    flex-grow: 1;
+    /* flex-shrink: 1;
+    flex-grow: 1; */
+    /* border: 1px dashed whitesmoke; */
 }
 
 #local_video {
@@ -26,6 +27,7 @@ html, body, div#root{
     right: 0;
     top: 0;
     width: 15%;
+    z-index: 5;
 }
 
 #button_container {
@@ -100,7 +102,7 @@ button {
     position: fixed;
     top: 3em;
     left: 0;
-    width: 100%;
+    width: 85%;
     height: calc(90% - 3em);
     overflow-y: auto;
     color: white;
@@ -117,7 +119,40 @@ button {
 #connection_status {
     position: fixed;
     top: 0;
-    left: 4em;
-    top: 1em;
+    left: 45%;
+    top: 0;
     font-weight: 900;
+}
+
+#chat {
+    position: fixed;
+    top: 3em;
+    left: 0;
+}
+
+#chat_input {
+    width: 14em;
+    height: 2em;
+    color: white;
+    background-color: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.5)
+}
+
+#chat_button {
+    height: 2em;
+}
+
+#chat_screen {
+    position: fixed;
+    left: 0;
+    top: 7em;
+    /* border: 1px solid white; */
+    width: 12em;
+    overflow-y: auto;
+    background-color: transparent;
+    max-height: calc(90% - 7em);
+}
+
+.chat_message {
+    padding-left: 0.5em;
 }

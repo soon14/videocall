@@ -179,7 +179,7 @@ function broadcast(source: string, msg: string | Message) {
   const roomId = clients[source].room;
   const msgString: string = typeof msg === "object" ? JSON.stringify(msg) : msg;
   rooms[roomId].forEach((userId) => {
-    if (userId !== source) {
+    if (userId !== source && clients[userId]) {
       // do not send back to source
       clients[userId].socket.send(msgString);
     }
@@ -187,6 +187,8 @@ function broadcast(source: string, msg: string | Message) {
 }
 
 function sendToOneUser(target: string, msg: string | Message) {
-  const msgString: string = typeof msg === "object" ? JSON.stringify(msg) : msg;
-  clients[target].socket.send(msgString);
+  if (clients[target]) {
+    const msgString: string = typeof msg === "object" ? JSON.stringify(msg) : msg;
+    clients[target].socket.send(msgString);
+  }
 }

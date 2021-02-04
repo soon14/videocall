@@ -6,6 +6,41 @@ let videoStream; // initialized after video toggle button is pressed
 let localStream = new MediaStream();
 let localScreenStream; // initialized after user clicks the button
 
+// let frontCamera: boolean = true; // if false, use rear camera
+// document.getElementById("local_video").onclick = () => {
+//   if (videoStream) {
+//     let constraints;
+//     if (frontCamera) {
+//       log("swapping to rear camera")
+//       frontCamera = false;
+//       constraints = {video: {facingMode: {exact: "environment"}}};
+//     }
+//     else {
+//       log("swapping to front camera")
+//       frontCamera = true;
+//       constraints = {video: {facingMode: "user"}};
+//     }
+//     videoStream.getTracks().forEach(track => {
+//       track.stop();
+//     });
+//     navigator.mediaDevices.getUserMedia(constraints)
+//     .then((stream) => {
+//       videoStream = stream;
+//       localVideoElement.srcObject = stream;
+
+//       // If not screensharing, send track to peerConnections
+//       // TODO: Is it correct to check for "not null" with !localScreenStream?
+//       if (localScreenStream == null) {  // == instead of === to include 'undefined'
+//         log(Object.values(peerConnections).length + " peer connections");
+//         Object.values(peerConnections).forEach((myPeerConnection) =>
+//           sendVideo(myPeerConnection)
+//         );
+//       }
+//     })
+//     .catch(handleError);
+//   }
+// };
+
 const localVideoElement: HTMLVideoElement = document.getElementById(
   "local_video"
 ) as HTMLVideoElement;
@@ -23,15 +58,21 @@ const localVideoElement: HTMLVideoElement = document.getElementById(
  *    and also by invite() in peerConnections.ts
  */
 
+
 /************* TOGGLE VIDEO *****************/
 export function sendVideo(myPeerConnection) {
     if (videoStream && myPeerConnection["videoSender"] == null) { // == instead of === to include 'undefined'
       log("streaming camera");
       const videoTrack = videoStream.getVideoTracks()[0];
-      myPeerConnection["videoSender"] = myPeerConnection.addTrack(
-        videoTrack,
-        localStream
-      );
+      if (myPeerConnection["videoSender"]) {
+        myPeerConnection["videoSender"].replaceTrack(videoTrack);
+      }
+      else {
+        myPeerConnection["videoSender"] = myPeerConnection.addTrack(
+          videoTrack,
+          localStream
+        );
+      }
     } 
   }
   
@@ -66,11 +107,21 @@ export function sendVideo(myPeerConnection) {
     else {
       console.log("turning on video...");
       // Request access to device
-      navigator.mediaDevices.getUserMedia({ video: {facingMode: "user"}})
+      navigator.mediaDevices.getUserMedia({ 
+        video: {
+          facingMode: "user",
+          width: 1280,
+          height: 720,
+          frameRate: 30
+        }
+      })
       .then((stream) => {
         videoButton.innerText = "camera [on]";
         videoStream = stream;
         console.log("video stream initialized");
+        log("camera enabled");
+        // log(stream.getVideoTracks()[0].getConstraints());
+        console.log(stream.getVideoTracks()[0].getConstraints());
         localVideoElement.srcObject = stream;
 
         // If not screensharing, send track to peerConnections

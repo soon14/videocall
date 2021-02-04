@@ -41,6 +41,9 @@ function connect() {
         case "user-joined-room":
           invite(data.source);
           break;
+        case "message":
+          receiveMsg(data.payload);
+          break;
         case "disconnect":
           handleDisconnect(data.source);
           break;
@@ -78,4 +81,30 @@ function hangUpCall() {
     source: localUserId,
   });
   window.location.href = "/videocall";
+}
+
+const chatInput: HTMLInputElement = (document.getElementById("chat_input") as HTMLInputElement);
+
+document.getElementById("chat_button").onclick = sendMsg;
+function sendMsg() {
+  log("localuserid: " + localUserId);
+  const msg = chatInput.value;
+  if (msg.length > 0) {
+    sendToServer({
+      type: "message",
+      payload: msg,
+      source: localUserId, // need to do something about adding this to the msg object automatically in sendToServer()
+    });
+    receiveMsg(msg); // add it to local chat screen as well
+    chatInput.value = "";
+  }
+}
+
+const chatScreen = document.getElementById("chat_screen");
+function receiveMsg(msg: string) {
+  const par = document.createElement("p");
+  par.innerText = msg;
+  par.className = "chat_message";
+  chatScreen.appendChild(par);
+  chatScreen.scrollTop = chatScreen.scrollHeight;
 }

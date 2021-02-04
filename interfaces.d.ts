@@ -20,4 +20,4 @@ export interface Message {
     sdp?: RTCSessionDescriptionInit;
 }
 type messageType = 'media-offer' | 'media-answer' |
-    'new-ice-candidate' | 'user-joined-room' | 'register' | 'disconnect';
+    'new-ice-candidate' | 'user-joined-room' | 'register' | 'disconnect' | 'message';

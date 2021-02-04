@@ -62,18 +62,44 @@ export function createPeerConnection(remoteUserId) {
   export function handleTrackEvent(event, remoteUserId) {
     console.log("handleTrack");
     console.log(event);
+    console.log(event.streams);
     log("handle track");
     const element: HTMLVideoElement = document.getElementById(
       remoteUserId
     ) as HTMLVideoElement;
-    if (event.streams[0]) {
-      if (event.streams[0].isActive === false) {
-        element.srcObject = null;
+
+    if (peerConnections[remoteUserId]['inboundStream'] == null) { // == to include undefined
+      console.log("creating stream");
+      const stream = new MediaStream();
+      stream.addTrack(event.track);
+      peerConnections[remoteUserId]['inboundStream'] = stream;
+      element.srcObject = stream;
+    }
+    else {
+      const stream: MediaStream = peerConnections[remoteUserId]['inboundStream'];
+      if (event.track.kind === "video") {
+        if (stream.getVideoTracks()[0]) {
+          stream.getVideoTracks()[0].stop();
+          stream.removeTrack(stream.getVideoTracks()[0]);
+        }
+        stream.addTrack(event.track);
       }
-      else {
-        element.srcObject = event.streams[0];
+      if (event.track.kind === "audio") {
+        if (stream.getAudioTracks()[0]) {
+          stream.getAudioTracks()[0].stop();
+          stream.removeTrack(stream.getAudioTracks()[0]);
+        }
+        stream.addTrack(event.track);
       }
     }
+    // if (event.streams[0]) {
+    //   if (event.streams[0].isActive === false) {
+    //     element.srcObject = null;
+    //   }
+    //   else {
+    //     element.srcObject = event.streams[0];
+    //   }
+    // }
     
     // if (element.srcObject) {
     //     console.log((element.srcObject as MediaStream).getTracks());

@@ -3,7 +3,7 @@ import {handleError, log} from "./debug";
 
 let audioStream; // initialized after navigator.mediaDevices.getUserMedia
 let videoStream; // initialized after video toggle button is pressed
-let localStream = new MediaStream();
+// let localStream = new MediaStream();
 let localScreenStream; // initialized after user clicks the button
 
 // let frontCamera: boolean = true; // if false, use rear camera
@@ -70,9 +70,11 @@ export function sendVideo(myPeerConnection) {
       else {
         myPeerConnection["videoSender"] = myPeerConnection.addTrack(
           videoTrack,
-          localStream
+          // localStream
         );
       }
+      log(myPeerConnection.getSenders().map((sender: RTCRtpSender) => sender.track));
+      // log(localStream.getTracks());
     } 
   }
   
@@ -86,14 +88,38 @@ export function sendVideo(myPeerConnection) {
   }
   
   const videoButton = document.getElementById("toggle_video");
-  videoButton.onclick = () => {
+  videoButton.onclick = onVideoToggle;
+
+  let cameraConstraints = { 
+    video: {
+      facingMode: "user",
+      // width: 1280,
+      // height: 720,
+      // frameRate: 30
+    }
+  };
+
+  // Toggle between front and rear camera by clicking on the local video element
+  localVideoElement.onclick = () => {
+    if (cameraConstraints.video.facingMode === "user") {
+      cameraConstraints.video.facingMode = "environment";
+    } else {
+      cameraConstraints.video.facingMode = "user";
+    }
+    // pray to God this works...
+    onVideoToggle();
+    onVideoToggle();
+    // update: actually works, unless you rapidly toggle back and forth.
+  }
+
+  function onVideoToggle() {
     if (videoStream) {
       console.log("turning off video...");
       videoButton.innerText = "camera [off]";
 
       // Stop browser from accessing the device
       // https://stackoverflow.com/questions/11642926/stop-close-webcam-stream-which-is-opened-by-navigator-mediadevices-getusermedia
-      videoStream.getTracks().forEach(track => {
+      videoStream.getVideoTracks().forEach(track => {
         track.stop();
       });
       videoStream = null;
@@ -107,21 +133,13 @@ export function sendVideo(myPeerConnection) {
     else {
       console.log("turning on video...");
       // Request access to device
-      navigator.mediaDevices.getUserMedia({ 
-        video: {
-          facingMode: "user",
-          width: 1280,
-          height: 720,
-          frameRate: 30
-        }
-      })
+      navigator.mediaDevices.getUserMedia(cameraConstraints)
       .then((stream) => {
         videoButton.innerText = "camera [on]";
         videoStream = stream;
         console.log("video stream initialized");
         log("camera enabled");
         // log(stream.getVideoTracks()[0].getConstraints());
-        console.log(stream.getVideoTracks()[0].getConstraints());
         localVideoElement.srcObject = stream;
 
         // If not screensharing, send track to peerConnections
@@ -143,7 +161,7 @@ export function sendVideo(myPeerConnection) {
       log("Streaming mic");
       myPeerConnection["audioSender"] = myPeerConnection.addTrack(
         audioStream.getAudioTracks()[0],
-        localStream
+        // localStream
       );
     }
   }
@@ -164,7 +182,7 @@ export function sendVideo(myPeerConnection) {
 
       // Stop browser from accessing this device
       // https://stackoverflow.com/questions/11642926/stop-close-webcam-stream-which-is-opened-by-navigator-mediadevices-getusermedia
-      audioStream.getTracks().forEach(track => {
+      audioStream.getAudioTracks().forEach(track => {
         track.stop();
       });
       audioStream = null;
@@ -208,7 +226,7 @@ export function sendVideo(myPeerConnection) {
           log("add new screen track");
           myPeerConnection["videoSender"] = myPeerConnection.addTrack(
             screenTrack,
-            localStream
+            // localStream
           );
         }
     }
@@ -238,7 +256,7 @@ export function sendVideo(myPeerConnection) {
 
       // Stop browser from accessing this device
       // https://stackoverflow.com/questions/11642926/stop-close-webcam-stream-which-is-opened-by-navigator-mediadevices-getusermedia
-      localScreenStream.getTracks().forEach(track => {
+      localScreenStream.getVideoTracks().forEach(track => {
         track.stop();
       });
       localScreenStream = null;

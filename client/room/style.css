@@ -10,7 +10,7 @@ html, body, div#root{
     width: 100%;
     height: 100%;
     background-color: #131313;
-    color: white;
+    color: rgba(255, 255, 255, 0.8);;
 }
 
 .remote_video {
@@ -36,17 +36,18 @@ html, body, div#root{
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 10%;
+    height: 9%;
+    min-height: 1em;
     /* transform: translate(-50%); */
     display: flex;
 }
 
 button {
     /* border-radius: 50px; */
-    border: 2px solid white;
+    border: 1px solid rgba(255, 255, 255, 0.8);;
     height: 100%;
     background-color: transparent;
-    color: white;
+    color: rgba(255, 255, 255, 0.8);;
     cursor: pointer;
     flex: 1;
 }
@@ -74,11 +75,12 @@ button {
 } */
 
 #toggle_log {
-    height: 3em;
+    height: 2em;
     width: 3em;
     position: fixed;
     top: 0;
     left: 0;
+    border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 #disconnect:hover {
@@ -137,24 +139,32 @@ button {
     height: 2em;
     color: white;
     background-color: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.5)
+    display: none;
 }
 
 #chat_button {
+    height: 2em;
+    display: none;
+}
+
+#chat_toggle {
     height: 2em;
 }
 
 #chat_screen {
     position: fixed;
     left: 0;
-    top: 7em;
+    top: 6em;
     /* border: 1px solid white; */
-    width: 12em;
+    width: 25%;
     overflow-y: auto;
     background-color: transparent;
-    max-height: calc(90% - 7em);
+    /* max-height: calc(90% - 7em); */
+    max-height: 7em;
+    color:rgba(255, 255, 255, 0.8);
 }
 
 .chat_message {
     padding-left: 0.5em;
+    word-wrap: break-word;
 }

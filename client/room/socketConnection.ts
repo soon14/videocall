@@ -84,8 +84,12 @@ function hangUpCall() {
 }
 
 const chatInput: HTMLInputElement = (document.getElementById("chat_input") as HTMLInputElement);
+const chatToggle = document.getElementById("chat_toggle");
+const chatButton = document.getElementById("chat_button");
+const chatScreen = document.getElementById("chat_screen");
 
-document.getElementById("chat_button").onclick = sendMsg;
+chatButton.onclick = sendMsg;
+
 function sendMsg() {
   log("localuserid: " + localUserId);
   const msg = chatInput.value;
@@ -98,9 +102,11 @@ function sendMsg() {
     receiveMsg(msg); // add it to local chat screen as well
     chatInput.value = "";
   }
+  chatInput.style.display = "none";
+  chatButton.style.display = "none";
+  chatToggle.style.display = "block";
 }
 
-const chatScreen = document.getElementById("chat_screen");
 function receiveMsg(msg: string) {
   const par = document.createElement("p");
   par.innerText = msg;
@@ -108,3 +114,10 @@ function receiveMsg(msg: string) {
   chatScreen.appendChild(par);
   chatScreen.scrollTop = chatScreen.scrollHeight;
 }
+
+chatToggle.onclick = () => {
+  chatInput.style.display = "block";
+  chatButton.style.display = "block";
+  chatToggle.style.display = "none";
+  chatInput.focus();
+};

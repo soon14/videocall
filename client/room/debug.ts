@@ -12,12 +12,12 @@ export function log(msg) {
 export function updateConnectionStatus(isConnected: boolean) {
     const el = document.getElementById("connection_status");
     if (isConnected) {
-        el.innerText ="Connected";
-        el.style.color = "green";
+        // el.innerText ="Connected";
+        el.style.backgroundColor = "green";
     }
     else {
-        el.innerText ="Disconnected";
-        el.style.color = "red";
+        // el.innerText ="Disconnected";
+        el.style.backgroundColor = "red";
     }
 }
 

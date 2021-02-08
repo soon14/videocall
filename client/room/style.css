@@ -50,6 +50,7 @@ button {
     color: rgba(255, 255, 255, 0.8);;
     cursor: pointer;
     flex: 1;
+    z-index: 50;
 }
 
 /* @media screen and (min-width: 721px) {
@@ -154,17 +155,18 @@ button {
 #chat_screen {
     position: fixed;
     left: 0;
-    top: 6em;
+    top: 8em;
     /* border: 1px solid white; */
     width: 25%;
     overflow-y: auto;
     background-color: transparent;
     /* max-height: calc(90% - 7em); */
-    max-height: 7em;
+    max-height: 8em;
     color:rgba(255, 255, 255, 0.8);
 }
 
 .chat_message {
     padding-left: 0.5em;
     word-wrap: break-word;
+    background-color: black;
 }

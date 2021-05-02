@@ -53,28 +53,6 @@ button {
     z-index: 50;
 }
 
-/* @media screen and (min-width: 721px) {
-    #button_container {
-        z-index: 100;
-        position: fixed;
-        bottom: 10px;
-        left: 50%;
-        transform: translate(-50%);
-        width: auto;
-        height: auto;
-    }
-
-    button {
-        border-radius: 50px;
-        border: 2px solid white;
-        height: 80px;
-        width: auto;
-        background-color: transparent;
-        color: white;
-        cursor: pointer;
-    }
-} */
-
 #toggle_log {
     height: 2em;
     width: 3em;
@@ -121,7 +99,7 @@ button {
 
 #connection_status {
     position: fixed;
-    top: 1em;
+    top: 0.5em;
     left: 3.5em;
     border-radius: 50px;
     width: 1em;
@@ -139,7 +117,7 @@ button {
     width: 14em;
     height: 2em;
     color: white;
-    background-color: transparent;
+    background-color: black;
     display: none;
 }
 
@@ -152,21 +130,30 @@ button {
     height: 2em;
 }
 
+#hide_chat {
+    margin-top: 1em;
+    height: 2em;
+    display: none;
+}
+
 #chat_screen {
     position: fixed;
     left: 0;
     top: 8em;
     /* border: 1px solid white; */
-    width: 25%;
+    width: 40%;
     overflow-y: auto;
     background-color: transparent;
-    /* max-height: calc(90% - 7em); */
-    max-height: 8em;
+    max-height: calc(90% - 7em);
+    /* max-height: 8em; */
     color:rgba(255, 255, 255, 0.8);
 }
 
 .chat_message {
     padding-left: 0.5em;
+    padding-right: 0.5em;
     word-wrap: break-word;
-    background-color: black;
+    background-color: rgba(0, 0, 0, 0.5);
+    width: fit-content;
+    max-width: calc(100% + 1em); /*plus left right padding*/
 }

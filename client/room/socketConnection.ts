@@ -1,4 +1,4 @@
-import { handleMediaOffer, handleMediaAnswer, handleNewICECandidateMsg, invite, handleDisconnect } from "./peerConnection";
+import { handleMediaOffer, handleMediaAnswer, handleNewICECandidateMsg, handleUserJoinedRoom, handleDisconnect, createPeerConnection, peerConnections, handleGetRoomParticipants } from "./peerConnection";
 import { Message } from "../../interfaces";
 import { log, handleError, updateConnectionStatus } from "./debug";
 
@@ -8,6 +8,29 @@ export let localUserId: string; // supplied by websocket during connect()
 
 window.onload = () => {
   connect();
+};
+
+
+const showHideElements = [
+  document.getElementById("button_container"),
+  document.getElementById("toggle_log"),
+];
+let timeout;
+window.onmousemove = showHide;
+window.onclick = showHide;
+
+function showHide() {
+  if (timeout) {
+    clearTimeout(timeout);
+  }
+  showHideElements.forEach((element) => {
+    element.style.opacity = '1';
+  });
+  timeout = setTimeout(() => {
+    showHideElements.forEach((element) => {
+      element.style.opacity = '0';
+    });
+  }, 5000);
 };
 
 function connect() {
@@ -21,9 +44,9 @@ function connect() {
     // event handlers
     ws.onmessage = (msg) => {
       const data: Message = JSON.parse(msg.data);
-      //   if (data.type != "new-ice-candidate") {
-      console.log(data);
-      //   }
+      if (data.type != "new-ice-candidate") {
+        log("Received: " + data.type);
+      }
 
       switch (data.type) {
         case "register":
@@ -39,13 +62,16 @@ function connect() {
           handleNewICECandidateMsg(data);
           break;
         case "user-joined-room":
-          invite(data.source);
+          handleUserJoinedRoom(data.source);
           break;
         case "message":
           receiveMsg(data.payload);
           break;
         case "disconnect":
           handleDisconnect(data.source);
+          break;
+        case "getRoomParticipants":
+          handleGetRoomParticipants(data.payload);
           break;
       }
     };
@@ -65,23 +91,34 @@ function connect() {
 }
 
 export function sendToServer(msg: Message) {
+  if (msg.type !== 'new-ice-candidate' && msg.type !== 'message' && msg.type !== 'register') {
+    log("Sending " + msg.type);
+  }
   ws.send(JSON.stringify(msg));
 }
 
 function handleRegister(msg: Message) {
   localUserId = msg.payload;
-  log("registered as " + localUserId);
+  log("Registered as " + localUserId);
+  sendToServer({ type: "getRoomParticipants", source: localUserId  });
 }
 
-document.getElementById("disconnect").onclick = () => hangUpCall();
-
-function hangUpCall() {
+/**
+ * Disconnect stuff *******************************************
+ */
+const disconnect = () => {
   sendToServer({
     type: "disconnect",
     source: localUserId,
   });
   window.location.href = "/videocall";
 }
+
+document.getElementById("disconnect").onclick = disconnect;
+
+/**
+ * Chat stuff *****************************************
+ */
 
 const chatInput: HTMLTextAreaElement = (document.getElementById("chat_input") as HTMLTextAreaElement);
 const chatToggle = document.getElementById("chat_toggle");
@@ -107,7 +144,7 @@ function sendMsg() {
   chatToggle.style.display = "block";
 }
 
-function receiveMsg(msg: string) {
+export function receiveMsg(msg: string) {
   // show chat (if not already visible)
   chatScreen.style.display = "block";
   hideButton.style.display = "block";
@@ -120,7 +157,8 @@ function receiveMsg(msg: string) {
   chatScreen.scrollTop = chatScreen.scrollHeight;
 }
 
-chatToggle.onclick = () => {
+chatToggle.onclick = (event) => {
+  event.stopPropagation(); // prevent window onclick listener
   // show input and send button
   chatInput.style.display = "block";
   chatButton.style.display = "block";

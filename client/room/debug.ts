@@ -22,6 +22,7 @@ export function updateConnectionStatus(isConnected: boolean) {
 }
 
 document.getElementById("toggle_log").onclick = (event) => {
+    event.stopPropagation(); // prevent window onclick listener
     const log = document.getElementById("log");
     if (log.style.display === 'block') {
         log.style.display = 'none';

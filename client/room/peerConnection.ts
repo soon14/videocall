@@ -1,6 +1,6 @@
 import {log, handleError} from "./debug";
 import { Message } from "../../interfaces";
-import {sendToServer, localUserId} from "./socketConnection";
+import {sendToServer, localUserId, receiveMsg} from "./socketConnection";
 import {sendVideo, sendAudio, sendScreen} from "./streams";
 import {createRemoteVideoElement, removeVideo} from "./dynamicHTML";
 
@@ -12,6 +12,9 @@ export const peerConnections: PeerConnection = {};
 
 // remoteUserId not supplied in case of creating peer connection as answer to a video offer
 export function createPeerConnection(remoteUserId) {
+  if(peerConnections[remoteUserId]) {
+    return;
+  }
   log("Connecting with user " + remoteUserId);
     const myPeerConnection = new RTCPeerConnection({
       iceServers: [
@@ -31,17 +34,31 @@ export function createPeerConnection(remoteUserId) {
       handleNegotiationNeededEvent(myPeerConnection, remoteUserId);
     };
     // myPeerConnection.onicegatheringstatechange = handleICEGatheringStateChangeEvent;
-    // myPeerConnection.onsignalingstatechange = handleSignalingStateChangeEvent;
+    // myPeerConnection.onsignalingstatechange = () => handleSignalingStateChangeEvent(myPeerConnection);
+
+    sendAudio(myPeerConnection);
+    sendVideo(myPeerConnection);
+    sendScreen(myPeerConnection);
     return myPeerConnection;
   }
   
   /******************** RTCPEERCONNECTION EVENT HANDLERS ***************************/
   
+  // function handleSignalingStateChangeEvent(myPeerConnection) {
+  //   log("State changed to: " +  myPeerConnection.connectionState);
+  //   switch (myPeerConnection.connectionState) {
+  //     case "connected":
+  //       log("Peer connected");
+  //       sendAudio(myPeerConnection);
+  //       sendVideo(myPeerConnection);
+  //       sendScreen(myPeerConnection);
+  //       break;
+  //   }
+  // }
   
   // called by RTCPeerconnection when a track is added or removed
   export function handleNegotiationNeededEvent(myPeerConnection, remoteUserId) {
-    console.log("handleNegotiationNeededEvent");
-    log("negotiationneeded");
+    log("handlenegotiationneeded");
     myPeerConnection
       .createOffer()
       .then((offer) => {
@@ -60,16 +77,12 @@ export function createPeerConnection(remoteUserId) {
   
   // called by RTCPeerConnection when remote user makes tracks available
   export function handleTrackEvent(event, remoteUserId) {
-    console.log("handleTrack");
-    console.log(event);
-    console.log(event.streams);
-    log("handle track");
+    log("handle track event");
     const element: HTMLVideoElement = document.getElementById(
       remoteUserId
     ) as HTMLVideoElement;
 
     if (peerConnections[remoteUserId]['inboundStream'] == null) { // == to include undefined
-      console.log("creating stream");
       const stream = new MediaStream();
       stream.addTrack(event.track);
       peerConnections[remoteUserId]['inboundStream'] = stream;
@@ -132,31 +145,24 @@ export function createPeerConnection(remoteUserId) {
   }
   
   /************** SIGNALLING EVENT HANDLERS ************************/
-  export function invite(remoteUserId) {
-    const myPeerConnection = createPeerConnection(remoteUserId);
+export function handleGetRoomParticipants(participants: string[]) {
+  log("Received participants: " + participants);
+  participants.forEach((userId) => createPeerConnection(userId));
+}
 
-    // Manually make media offer
-    handleNegotiationNeededEvent(myPeerConnection, remoteUserId);
+  export function handleUserJoinedRoom(remoteUserId: string) {
+    createPeerConnection(remoteUserId);
+    receiveMsg("User " + remoteUserId.substring(0, 7) + " joined the room!");
   }
   
   export function handleMediaOffer(msg: Message) {
-    console.log("handle media offer");
-    log("handle media offer");
-  
     let myPeerConnection = peerConnections[msg.source];
     if (myPeerConnection == null) {
+      log("Creating peer connection after receiving media offer");
       myPeerConnection = createPeerConnection(msg.source);
     }
     myPeerConnection
       .setRemoteDescription(new RTCSessionDescription(msg.sdp))
-      .then(() => {
-        // This feels a little strange...
-        // You only get media offers when you just connected.
-        // You shouldn't even had any time to toggle on any media streaming
-        sendAudio(myPeerConnection);
-        sendVideo(myPeerConnection);
-        sendScreen(myPeerConnection);
-      })
       .then(() => {
         return myPeerConnection.createAnswer();
       })
@@ -180,16 +186,15 @@ export function createPeerConnection(remoteUserId) {
   }
   
   export function handleMediaAnswer(msg: Message) {
-    log("handle media answer");
     peerConnections[msg.source].setRemoteDescription(
       new RTCSessionDescription(msg.sdp)
     );
     createRemoteVideoElement(msg.source);
 
     // Send media tracks if available. This may trigger negotiation again
-    sendAudio(peerConnections[msg.source]);
-    sendVideo(peerConnections[msg.source]);
-    sendScreen(peerConnections[msg.source]);
+    // sendAudio(peerConnections[msg.source]);
+    // sendVideo(peerConnections[msg.source]);
+    // sendScreen(peerConnections[msg.source]);
   }
   
   /**
@@ -197,6 +202,7 @@ export function createPeerConnection(remoteUserId) {
    */
   export function handleDisconnect(source: string) {
     log("user " + source + " left the room");
+    receiveMsg("User " + source.substring(0, 7) + " has left the room!");
     removeVideo(source);
     if (peerConnections[source]) {
       peerConnections[source].close();

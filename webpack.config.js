@@ -4,7 +4,8 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 module.exports = {
   devtool: "inline-source-map",
   entry: [
-    path.resolve(__dirname, "client/room/socketConnection.ts")
+    path.resolve(__dirname, "client/room/socketConnection.ts"),
+    path.resolve(__dirname, "client/room/streams.ts")
   ],
   output: {
     path: path.resolve(__dirname, 'client/build/room'),

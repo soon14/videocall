@@ -8,7 +8,9 @@ let ws: WebSocket;
 const roomId = window.location.pathname.split("/").pop();
 export let localUserId: string; // supplied by websocket during connect()
 
-window.onload = () => {
+const enterRoomButton = document.getElementById("enter_room");
+enterRoomButton.onclick = () => {
+  enterRoomButton.style.display = "none";
   connect();
 };
 

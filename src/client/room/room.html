@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,9 +10,10 @@
         const exports = {}; // used to prevent runtime error when importing type definitions
     </script>
 </head>
+
 <body>
     <div id="root">
-<!--        <div id="video_container2">-->
+        <button id="enter_room">Click to enter room</button>
         <div id="video_container">
             <video id="local_video" autoplay muted></video>
         </div>
@@ -22,29 +24,27 @@
             <button id="disconnect">disconnect</button>
         </div>
         <button id="toggle_log">log</button>
-       <div id="log"></div>
-       <div id="connection_status"></div>
-       <div id="chat">
+        <div id="log"></div>
+        <div id="connection_status"></div>
+        <div id="chat">
             <button id="chat_toggle">Chat</button>
             <textarea id="chat_input"></textarea>
             <button id="chat_button">send</button>
             <button id="hide_chat">hide</button>
             <div id="chat_screen"></div>
-       </div>
-       <div id="disconnect_options">
+        </div>
+        <!-- <div id="disconnect_options">
             <div id="disconnect_options_wrapper">
                 <div>
-                    <button id="destroy_button"
-                    class="disconnect_option"
-                    >Destroy room</button> after <input id="destroy_timer" type="number" value=0> minutes
+                    <button id="destroy_button" class="disconnect_option">Destroy room</button> after <input
+                        id="destroy_timer" type="number" value=0> minutes
                 </div>
-                <button id="disconnect_button"
-                class="disconnect_option"
-                >Just disconnect me</button>
+                <button id="disconnect_button" class="disconnect_option">Just disconnect me</button>
                 <button id="cancel_disconnect" class="disconnect_option">Cancel</button>
             </div>
-       </div>
-       <div id="timer_alert"></div>
+        </div> -->
+        <!-- <div id="timer_alert"></div> -->
     </div>
 </body>
+
 </html>

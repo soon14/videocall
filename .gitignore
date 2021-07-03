@@ -1,8 +1,6 @@
 .idea/
-client/script.js
+src/client/build
 node_modules/
 *.js
 !webpack.config.js
 *.map
-ideas.txt
-client/build

@@ -10,7 +10,7 @@ docker container rm $CONTAINER_NAME
 
 docker image rm $IMAGE_NAME
 npm run compile
-docker build -t $IMAGE_NAME .
+docker build -t $IMAGE_NAME ../
 
 docker run -p $IP:8080:8080 -p $IP:3000:3000 -d --network videocall --name $CONTAINER_NAME $IMAGE_NAME
 

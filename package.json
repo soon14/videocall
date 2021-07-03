@@ -4,8 +4,7 @@
   "private": true,
   "scripts": {
     "start": "tsc app.ts && node app.js",
-    "compile-client": "tsc -w client/room/script.ts",
-    "compile": "tsc && webpack --config ./webpack.config.js && cp -r ./client/main ./client/build && cp ./client/room/style.css ./client/build/room"
+    "compile": "tsc && webpack --config ./webpack.config.js && cp -r ./src/client/main ./src/client/build && cp ./src/client/room/style.css ./src/client/build/room"
   },
   "dependencies": {
     "@types/node": "^14.6.0",
@@ -14,6 +13,10 @@
     "ws": "^7.3.1"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^4.28.0",
+    "@typescript-eslint/parser": "^4.28.0",
+    "eslint": "^7.29.0",
+    "eslint-config-google": "^0.14.0",
     "html-webpack-plugin": "^4.5.0",
     "ts-loader": "^8.0.12",
     "typescript": "^4.1.3",

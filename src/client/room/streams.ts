@@ -1,5 +1,5 @@
-import {peerConnections} from "./peerConnection";
-import {handleError, log} from "./debug";
+import { peerConnections } from "./peerConnection";
+import { Color, handleError, log } from "./debug";
 
 let audioStream; // initialized after navigator.mediaDevices.getUserMedia
 let videoStream; // initialized after video toggle button is pressed
@@ -65,13 +65,15 @@ const localVideoElement: HTMLVideoElement = document.getElementById(
  * Attempt to send video. Return true if successful, return false if not.
  */
 export function sendVideo(myPeerConnection): boolean {
-log("Send Video");
+  log("Send Video", Color.YELLOW);
   if (videoStream && myPeerConnection["videoSender"] == null) { // == instead of === to include 'undefined'
     const videoTrack = videoStream.getVideoTracks()[0];
     if (myPeerConnection["videoSender"]) {
+      log("replace video sender", Color.YELLOW);
       myPeerConnection["videoSender"].replaceTrack(videoTrack);
     }
     else {
+      log("add video sender", Color.YELLOW);
       myPeerConnection["videoSender"] = myPeerConnection.addTrack(
         videoTrack,
         // localStream
@@ -93,7 +95,7 @@ function muteVideo(myPeerConnection) {
 const videoButton = document.getElementById("toggle_video");
 videoButton.onclick = onVideoToggle;
 
-let cameraConstraints = { 
+let cameraConstraints = {
   video: {
     facingMode: "user",
     // width: 1280,
@@ -132,29 +134,29 @@ function onVideoToggle() {
     Object.values(peerConnections).forEach((myPeerConnection) =>
       muteVideo(myPeerConnection)
     );
-  } 
+  }
   else {
     log("turning on video...");
     // Request access to device
     navigator.mediaDevices.getUserMedia(cameraConstraints)
-    .then((stream) => {
-      videoButton.innerText = "camera [on]";
-      videoStream = stream;
-      console.log("video stream initialized");
-      log("camera enabled");
-      // log(stream.getVideoTracks()[0].getConstraints());
-      localVideoElement.srcObject = stream;
+      .then((stream) => {
+        videoButton.innerText = "camera [on]";
+        videoStream = stream;
+        console.log("video stream initialized");
+        log("camera enabled");
+        // log(stream.getVideoTracks()[0].getConstraints());
+        localVideoElement.srcObject = stream;
 
-      // If not screensharing, send track to peerConnections
-      // TODO: Is it correct to check for "not null" with !localScreenStream?
-      if (localScreenStream == null) {  // == instead of === to include 'undefined'
-        log(Object.values(peerConnections).length + " peer connections");
-        Object.values(peerConnections).forEach((myPeerConnection) =>
-          sendVideo(myPeerConnection)
-        );
-      }
-    })
-    .catch(handleError);
+        // If not screensharing, send track to peerConnections
+        // TODO: Is it correct to check for "not null" with !localScreenStream?
+        if (localScreenStream == null) {  // == instead of === to include 'undefined'
+          log(Object.values(peerConnections).length + " peer connections");
+          Object.values(peerConnections).forEach((myPeerConnection) =>
+            sendVideo(myPeerConnection)
+          );
+        }
+      })
+      .catch(handleError);
   }
 };
 
@@ -196,23 +198,23 @@ audioButton.onclick = () => {
     Object.values(peerConnections).forEach((myPeerConnection) =>
       muteAudio(myPeerConnection)
     );
-    
-  } 
+
+  }
   else {
     console.log("turning on audio...");
     // Request access to device
     navigator.mediaDevices.getUserMedia({ audio: true })
-    .then((stream) => {
-      console.log("audio stream initialized");
-      audioButton.innerText = "mic [on]";
-      audioStream = stream;
-      // Send tracks to peerConnections
-      Object.values(peerConnections).forEach((myPeerConnection) =>
-        sendAudio(myPeerConnection)
-      );
-    })
-    .catch(handleError);
-    
+      .then((stream) => {
+        console.log("audio stream initialized");
+        audioButton.innerText = "mic [on]";
+        audioStream = stream;
+        // Send tracks to peerConnections
+        Object.values(peerConnections).forEach((myPeerConnection) =>
+          sendAudio(myPeerConnection)
+        );
+      })
+      .catch(handleError);
+
   }
 };
 
@@ -226,7 +228,7 @@ export function sendScreen(myPeerConnection): boolean {
     if (myPeerConnection["videoSender"]) {
       log("replace screen track");
       myPeerConnection["videoSender"].replaceTrack(screenTrack);
-    } 
+    }
     else {
       log("add new screen track");
       myPeerConnection["videoSender"] = myPeerConnection.addTrack(
@@ -247,7 +249,7 @@ function muteScreen(myPeerConnection) {
       myPeerConnection["videoSender"].replaceTrack(
         videoStream.getVideoTracks()[0]
       );
-    } 
+    }
     else {
       myPeerConnection.removeTrack(myPeerConnection["videoSender"]);
       myPeerConnection["videoSender"] = null;
@@ -271,23 +273,23 @@ screenButton.onclick = () => {
     Object.values(peerConnections).forEach((myPeerConnection) =>
       muteScreen(myPeerConnection)
     );
-    
-  } 
+
+  }
   else {
     console.log("Turning on screen sharing...");
     // Request access to screen
     (navigator.mediaDevices as any)
-    .getDisplayMedia({})
-    .then((stream) => {
-      console.log("screen stream initialized");
-      screenButton.innerText = "screen [on]";
-      localScreenStream = stream;
-      log(Object.values(peerConnections).length + " peer connections (screen)");
-      // Send tracks to peerConnections
-      Object.values(peerConnections).forEach((myPeerConnection) =>
-        sendScreen(myPeerConnection)
-      );
-    })
-    .catch(handleError);
+      .getDisplayMedia({})
+      .then((stream) => {
+        console.log("screen stream initialized");
+        screenButton.innerText = "screen [on]";
+        localScreenStream = stream;
+        log(Object.values(peerConnections).length + " peer connections (screen)");
+        // Send tracks to peerConnections
+        Object.values(peerConnections).forEach((myPeerConnection) =>
+          sendScreen(myPeerConnection)
+        );
+      })
+      .catch(handleError);
   }
 };

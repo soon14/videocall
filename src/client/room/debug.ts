@@ -1,11 +1,19 @@
 export function handleError(err) {
     log(err);
 }
-  
-export function log(msg) {
+
+export enum Color {
+    RED = "red",
+    GREEN = "green",
+    YELLOW = "yellow",
+    CYAN = "cyan",
+}
+
+export function log(msg, color?: Color) {
     const entry = document.createElement("p");
     entry.className = "logEntry";
     entry.innerText = msg;
+    entry.style.backgroundColor = color || "white";
     document.getElementById("log").appendChild(entry);
 }
 

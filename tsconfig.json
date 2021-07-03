@@ -7,7 +7,7 @@
     // "sourceMap": true,
   },
   "files": [
-    "server.ts",
+    "src/server/server.ts",
   ],
   "exclude": [
     "node_modules",

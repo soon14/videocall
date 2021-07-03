@@ -6,7 +6,7 @@ import { readFileSync } from "fs";
 import * as WebSocket from "ws";
 import { join } from "path";
 import { v4 as uuidv4 } from "uuid";
-import { Clients, Message, Rooms } from "./interfaces";
+import { Clients, Message, Rooms } from "../interfaces";
 
 const socketPort = 3000;
 const httpsPort = 443;
@@ -15,14 +15,14 @@ const httpPort = 8080;
 const clients: Clients = {};
 const rooms: Rooms = {};
 
-app.use(express.static(join(__dirname, "client/build")));
+app.use(express.static(join(__dirname, "../client/build")));
 
 app.get("/", (req, res) => {
   res.redirect("/index.html");
 });
 
 app.get("/index.html", (req, res) => {
-  res.sendFile(join(__dirname, "/client/build/main/index.html"));
+  res.sendFile(join(__dirname, "../client/build/main/index.html"));
 });
 
 app.get("/createRoom", (req, res) => {
@@ -30,7 +30,7 @@ app.get("/createRoom", (req, res) => {
 });
 
 app.get("/room/:room", (req, res) => {
-  res.sendFile(join(__dirname, "/client/build/room/room.html"));
+  res.sendFile(join(__dirname, "../client/build/room/room.html"));
 });
 
 http.createServer(app).listen(httpPort, () => {
@@ -43,7 +43,7 @@ wss.on("listening", () => {
 });
 
 wss.on("connection", (ws) => {
-  log("client connected");
+  log("WebSocket connected");
 
   ws.on("message", (msg) => {
     const msgJson: Message = JSON.parse(msg);
@@ -58,9 +58,9 @@ wss.on("connection", (ws) => {
         case "disconnect":
           handleDisconnect(msgJson.source, msgJson);
           break;
-          case "getRoomParticipants":
-            handleGetRoomParticipants(msgJson);
-            break;
+        case "getRoomParticipants":
+          handleGetRoomParticipants(msgJson);
+          break;
         // otherwise, simply forward message to other user(s)
         default:
           if (msgJson.target) {
@@ -75,7 +75,7 @@ wss.on("connection", (ws) => {
   });
   ws.on("close", () => {
     if (clients[ws.userId]) {
-      // log("lost connection with " + ws.userId);
+      log("Lost connection with " + ws.userId);
 
       const timeout = 5000; // allow 5 seconds for the user to reconnect
       const disconnectTimer = setTimeout(() => {
@@ -174,7 +174,7 @@ function handleDisconnect(source: string, msg?: Message | string) {
   }
   // let others know
   broadcast(source, msg);
-  
+
   // Free up resources...
 
   // room is a string array of users in this room
@@ -219,3 +219,5 @@ function log(...msgs) {
 function logError(err) {
   log("ERROR: ", JSON.stringify(err, null, 2));
 }
+
+

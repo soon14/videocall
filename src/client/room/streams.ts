@@ -121,6 +121,7 @@ function onVideoToggle() {
   if (videoStream) {
     console.log("turning off video...");
     videoButton.innerText = "camera [off]";
+    videoButton.classList.remove("active");
 
     // Stop browser from accessing the device
     // https://stackoverflow.com/questions/11642926/stop-close-webcam-stream-which-is-opened-by-navigator-mediadevices-getusermedia
@@ -141,6 +142,7 @@ function onVideoToggle() {
     navigator.mediaDevices.getUserMedia(cameraConstraints)
       .then((stream) => {
         videoButton.innerText = "camera [on]";
+        videoButton.classList.add("active");
         videoStream = stream;
         console.log("video stream initialized");
         log("camera enabled");
@@ -186,6 +188,7 @@ audioButton.onclick = () => {
   if (audioStream) {
     console.log("turning off audio...");
     audioButton.innerText = "mic [off]";
+    audioButton.classList.remove("active");
 
     // Stop browser from accessing this device
     // https://stackoverflow.com/questions/11642926/stop-close-webcam-stream-which-is-opened-by-navigator-mediadevices-getusermedia
@@ -207,6 +210,7 @@ audioButton.onclick = () => {
       .then((stream) => {
         console.log("audio stream initialized");
         audioButton.innerText = "mic [on]";
+        audioButton.classList.add("active");
         audioStream = stream;
         // Send tracks to peerConnections
         Object.values(peerConnections).forEach((myPeerConnection) =>
@@ -262,6 +266,7 @@ screenButton.onclick = () => {
   if (localScreenStream) {
     console.log("Turning off screen sharing...");
     screenButton.innerText = "screen [off]";
+    screenButton.classList.remove("active");
 
     // Stop browser from accessing this device
     // https://stackoverflow.com/questions/11642926/stop-close-webcam-stream-which-is-opened-by-navigator-mediadevices-getusermedia
@@ -283,6 +288,7 @@ screenButton.onclick = () => {
       .then((stream) => {
         console.log("screen stream initialized");
         screenButton.innerText = "screen [on]";
+        screenButton.classList.add("active");
         localScreenStream = stream;
         log(Object.values(peerConnections).length + " peer connections (screen)");
         // Send tracks to peerConnections

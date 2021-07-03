@@ -1,22 +1,26 @@
 <!DOCTYPE html>
 <html lang="en" style="background-color: #131313">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>VideoCall</title>
 </head>
+
 <body>
-<input id="roomInput" placeholder="Room ID"/><button id="joinRoom">Join room</button>
-<a href="createRoom"><button style="width: 200px; height: 200px;">Create room</button></a>
-<a href="room/fantastic1"><button style="width: 200px; height: 200px;">Room 1</button></a>
-<a href="room/fantastic2"><button style="width: 200px; height: 200px;">Room 2</button></a>
-<script>
-    document.getElementById("joinRoom").onclick = function (event) {
-        const roomId = document.getElementById("roomInput").value;
-        if (roomId && roomId.length > 0) {
-            window.location.href = "room/" + roomId;
-        }
-    };
-</script>
+    <input id="roomInput" placeholder="Room ID" /><button id="joinRoom">Join room</button>
+    <a href="createRoom"><button style="width: 200px; height: 200px;">Create room</button></a>
+    <a href="room/fantastic1"><button style="width: 200px; height: 200px;">Room 1</button></a>
+    <a href="room/fantastic2"><button style="width: 200px; height: 200px;">Room 2</button></a>
+    <script>
+        document.getElementById("joinRoom").onclick = function (event) {
+            const roomId = document.getElementById("roomInput").value;
+            if (roomId && roomId.length > 0) {
+                window.location.href = "room/" + roomId;
+            }
+        };
+    </script>
 </body>
+
 </html>

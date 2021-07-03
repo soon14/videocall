@@ -80,19 +80,31 @@ button {
 }
 
 #disconnect {
-    background-color: rgba(255, 0, 0, 0.5);
+    background-color: rgba(255, 0, 0, 0.7);
 }
 
-#toggle_video {
-    background-color: rgba(0, 255, 255, 0.5);
+#toggle_video:hover {
+    background-color: rgba(0, 255, 255, 0.7);
 }
 
-#toggle_audio {
-    background-color: rgba(0, 0, 255, 0.5);
+#toggle_video.active {
+    background-color: rgba(0, 255, 255, 0.7);
 }
 
-#toggle_screen {
-    background-color: rgba(0, 255, 0, 0.5);
+#toggle_audio:hover {
+    background-color: rgba(0, 0, 255, 0.7);
+}
+
+#toggle_audio.active {
+    background-color: rgba(0, 0, 255, 0.7);
+}
+
+#toggle_screen:hover {
+    background-color: rgba(0, 255, 0, 0.7);
+}
+
+#toggle_screen.active {
+    background-color: rgba(0, 255, 0, 0.7);
 }
 
 #log {

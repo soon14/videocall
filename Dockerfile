@@ -1,4 +1,4 @@
-FROM node:12
+FROM node:16
 
 # Create app directory
 WORKDIR /usr/src/app
@@ -18,6 +18,8 @@ COPY . .
 EXPOSE 8080
 EXPOSE 3000
 
-CMD [ "node", "src/server/server.js" ]
+CMD [ "npm", "start" ]
+
+# RUN npm start
 
 USER node

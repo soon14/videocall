@@ -7,6 +7,7 @@ import * as WebSocket from "ws";
 import { join } from "path";
 import { v4 as uuidv4 } from "uuid";
 import { Clients, Message, Rooms } from "../interfaces";
+import { log, logError, logWithColor, Color } from "./logger";
 
 const socketPort = 3000;
 const httpsPort = 443;
@@ -34,16 +35,16 @@ app.get("/room/:room", (req, res) => {
 });
 
 http.createServer(app).listen(httpPort, () => {
-  log("http server started on port %d", httpPort);
+  logWithColor(Color.FgGreen, "http server started on porbbt ", httpPort);
 });
 
 const wss = new WebSocket.Server({ port: socketPort });
 wss.on("listening", () => {
-  log("websocket server listening on port %d", socketPort);
+  logWithColor(Color.FgGreen, "websocket server listening on port ", socketPort);
 });
 
 wss.on("connection", (ws) => {
-  log("WebSocket connected");
+  logWithColor(Color.FgYellow, "WebSocket connected");
 
   ws.on("message", (msg) => {
     const msgJson: Message = JSON.parse(msg);
@@ -66,23 +67,28 @@ wss.on("connection", (ws) => {
           if (msgJson.target) {
             sendToOneUser(msgJson.target, msg);
           } else {
-            broadcast(source, msg);
+            broadcast(msg, clients[source].room, source);
           }
       }
     } catch (err) {
-      logError(err);
+      logError("on message:\n", err);
     };
   });
   ws.on("close", () => {
-    if (clients[ws.userId]) {
-      log("Lost connection with " + ws.userId);
-
-      const timeout = 5000; // allow 5 seconds for the user to reconnect
-      const disconnectTimer = setTimeout(() => {
-        handleDisconnect(ws.userId);
-      }, timeout);
-      // IMPORTANT: add disconnectTimer to ws object, because I'm too lazy to keep this separate somewhere else.
-      clients[ws.userId].disconnectTimer = disconnectTimer;
+    try {
+      logWithColor(Color.FgMagenta, "Lost connection with ", ws.userId);
+      if (clients[ws.userId]) {
+        const timeout = 5000; // allow 5 seconds for the user to reconnect
+        const disconnectTimer = setTimeout(() => {
+          if (clients[ws.userId]) {
+            handleDisconnect(ws.userId);
+          }
+        }, timeout);
+        // IMPORTANT: add disconnectTimer to ws object, because I'm too lazy to keep this separate somewhere else.
+        clients[ws.userId].disconnectTimer = disconnectTimer;
+      }
+    } catch (err) {
+      logError("on close:\n", err);
     }
   });
 });
@@ -95,7 +101,7 @@ function handleRegister(ws, msg) {
   // In case the client is trying to reconnect, he will supply his last known userId.
   // If he was in time, we still have him in memory.
   if (msg.source && clients[msg.source]) {
-    // log("reconnected user " + msg.source);
+    logWithColor(Color.FgYellow, "Reconnected user " + msg.source);
 
     // update websocket object associated with this client
     clients[msg.source].socket = ws;
@@ -136,17 +142,17 @@ function handleRegister(ws, msg) {
 
   if (rooms[roomId]) {
     rooms[roomId].push(userId);
-    log(`added user ${userId} to room ${roomId}`);
+    logWithColor(Color.FgYellow, `Added user ${userId} to room ${roomId}`);
   } else {
     rooms[roomId] = [userId];
-    log(`created room ${roomId} with user ${userId}`);
+    logWithColor(Color.FgYellow, `Created room ${roomId} with user ${userId}`);
   }
 
   // let others know that a new user joined the room, so they can send him offers
-  broadcast(userId, {
+  broadcast({
     type: "user-joined-room",
     source: userId,
-  });
+  }, roomId, userId);
 }
 
 function handleGetRoomParticipants(msgJson: Message) {
@@ -161,47 +167,52 @@ function handleGetRoomParticipants(msgJson: Message) {
 }
 
 function handleDisconnect(source: string, msg?: Message | string) {
-  // in case the disconnect was implicit (by exiting the browser), the client did not send
+  // in case the disconnect was implicit (by exiting  the browser), the client did not send
   // a message, so we need to create one ourselves.
   let explicitDisconnect = true;
   let roomId = clients[source].room;
   if (typeof msg === "undefined") {
     explicitDisconnect = false;
     msg = { type: "disconnect", source };
-    log("User disconnected (implicit): " + source);
+    logWithColor(Color.FgMagenta, "User disconnected (implicit): " + source);
   } else {
-    log("User disconnected (explicit): " + source);
+    logWithColor(Color.FgMagenta, "User disconnected (explicit): " + source);
+    if (clients[source].disconnectTimer) {
+      clearTimeout(clients[source].disconnectTimer);
+      clients[source].disconnectTimer = null;
+    }
   }
-  // let others know
-  broadcast(source, msg);
-
   // Free up resources...
-
   // room is a string array of users in this room
   const room: string[] = rooms[roomId];
+  logWithColor(Color.FgMagenta, "room: ", room);
+  logWithColor(Color.FgMagenta, "rooms:\n", rooms);
 
   if (room.length === 1) {
     // delete entire room if user is the sole participant
-    log(`deleting room ${roomId}`);
+    logWithColor(Color.FgMagenta, `Deleting room ${roomId}`);
     delete rooms[roomId];
   } else {
-    log(`After disconnect of ${source} there are still ${room.length - 1} users in room ${roomId}`);
+    logWithColor(Color.FgMagenta, `After disconnect of ${source} there are still ${room.length - 1} users in room ${roomId}`);
     room.splice(room.indexOf(source), 1);
+    // let others know
+    broadcast(msg, roomId);
   }
   // finally, delete client
   delete clients[source];
 }
 
 // broadcast to everyone in the same room, except the original sender.
-function broadcast(source: string, msg: string | Message) {
-  const roomId = clients[source].room;
-  const msgString: string = typeof msg === "object" ? JSON.stringify(msg) : msg;
-  rooms[roomId].forEach((userId) => {
-    if (userId !== source && clients[userId]) {
+function broadcast(msg: string | Message, roomId: string, source?: string) {
+  if (roomId) {
+    const msgString: string = typeof msg === "object" ? JSON.stringify(msg) : msg;
+    rooms[roomId].forEach((userId) => {
       // do not send back to source
-      clients[userId].socket.send(msgString);
-    }
-  });
+      if (userId !== source && clients[userId]) {
+        clients[userId].socket.send(msgString);
+      }
+    });
+  }
 }
 
 function sendToOneUser(target: string, msg: string | Message) {
@@ -210,14 +221,3 @@ function sendToOneUser(target: string, msg: string | Message) {
     clients[target].socket.send(msgString);
   }
 }
-
-function log(...msgs) {
-  const mapped = msgs.map((x) => JSON.stringify(x, null, 2));
-  console.log(Date.now().toLocaleString(), ' - ', mapped);
-}
-
-function logError(err) {
-  log("ERROR: ", JSON.stringify(err, null, 2));
-}
-
-

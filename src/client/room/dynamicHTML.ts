@@ -91,9 +91,12 @@ export function removeVideo(source: string) {
 }
 
 const showHideElements = [
-  document.getElementById("button_container"),
-  document.getElementById("toggle_log"),
+  "button_container",
+  "toggle_log",
+  "connection_status",
 ];
+
+const showHideElementsOnclicks = showHideElements.map((id) => document.getElementById(id).onclick);
 let timeout;
 window.onmousemove = showHide;
 window.onclick = showHide;
@@ -102,12 +105,16 @@ function showHide() {
   if (timeout) {
     clearTimeout(timeout);
   }
-  showHideElements.forEach((element) => {
+  showHideElements.forEach((id, i) => {
+    const element = document.getElementById(id);
     element.style.opacity = '1';
+    element.onclick = showHideElementsOnclicks[i]; // restore clicking behaviour when visible
   });
   timeout = setTimeout(() => {
-    showHideElements.forEach((element) => {
+    showHideElements.forEach((id) => {
+      const element = document.getElementById(id);
       element.style.opacity = '0';
+      element.onclick = null; // prevent clicking when not visible
     });
   }, 5000);
 };

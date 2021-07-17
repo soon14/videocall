@@ -65,15 +65,12 @@ const localVideoElement: HTMLVideoElement = document.getElementById(
  * Attempt to send video. Return true if successful, return false if not.
  */
 export function sendVideo(myPeerConnection): boolean {
-  log("Send Video", Color.YELLOW);
   if (videoStream && myPeerConnection["videoSender"] == null) { // == instead of === to include 'undefined'
     const videoTrack = videoStream.getVideoTracks()[0];
     if (myPeerConnection["videoSender"]) {
-      log("replace video sender", Color.YELLOW);
       myPeerConnection["videoSender"].replaceTrack(videoTrack);
     }
     else {
-      log("add video sender", Color.YELLOW);
       myPeerConnection["videoSender"] = myPeerConnection.addTrack(
         videoTrack,
         // localStream
@@ -113,13 +110,12 @@ localVideoElement.onclick = () => {
   }
   // pray to God this works...
   onVideoToggle();
-  onVideoToggle();
+  setTimeout(onVideoToggle, 1000);
   // update: actually works, unless you rapidly toggle back and forth.
 }
 
 function onVideoToggle() {
   if (videoStream) {
-    console.log("turning off video...");
     videoButton.innerText = "camera [off]";
     videoButton.classList.remove("active");
 
@@ -137,22 +133,17 @@ function onVideoToggle() {
     );
   }
   else {
-    log("turning on video...");
     // Request access to device
     navigator.mediaDevices.getUserMedia(cameraConstraints)
       .then((stream) => {
         videoButton.innerText = "camera [on]";
         videoButton.classList.add("active");
         videoStream = stream;
-        console.log("video stream initialized");
-        log("camera enabled");
-        // log(stream.getVideoTracks()[0].getConstraints());
         localVideoElement.srcObject = stream;
 
         // If not screensharing, send track to peerConnections
         // TODO: Is it correct to check for "not null" with !localScreenStream?
         if (localScreenStream == null) {  // == instead of === to include 'undefined'
-          log(Object.values(peerConnections).length + " peer connections");
           Object.values(peerConnections).forEach((myPeerConnection) =>
             sendVideo(myPeerConnection)
           );
@@ -165,7 +156,6 @@ function onVideoToggle() {
 /************ TOGGLE AUDIO *******************/
 export function sendAudio(myPeerConnection): boolean {
   if (audioStream && myPeerConnection["audioSender"] == null) { // == instead of === to include 'undefined'
-    log("Streaming mic");
     myPeerConnection["audioSender"] = myPeerConnection.addTrack(
       audioStream.getAudioTracks()[0],
       // localStream
@@ -177,7 +167,6 @@ export function sendAudio(myPeerConnection): boolean {
 
 function muteAudio(myPeerConnection) {
   if (myPeerConnection["audioSender"]) {
-    log("Stopped streaming mic");
     myPeerConnection.removeTrack(myPeerConnection["audioSender"]);
     myPeerConnection["audioSender"] = null;
   }
@@ -186,7 +175,6 @@ function muteAudio(myPeerConnection) {
 const audioButton = document.getElementById("toggle_audio");
 audioButton.onclick = () => {
   if (audioStream) {
-    console.log("turning off audio...");
     audioButton.innerText = "mic [off]";
     audioButton.classList.remove("active");
 
@@ -204,11 +192,9 @@ audioButton.onclick = () => {
 
   }
   else {
-    console.log("turning on audio...");
     // Request access to device
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then((stream) => {
-        console.log("audio stream initialized");
         audioButton.innerText = "mic [on]";
         audioButton.classList.add("active");
         audioStream = stream;
@@ -225,16 +211,13 @@ audioButton.onclick = () => {
 /************** TOGGLE SCREEN SHARING *********************/
 export function sendScreen(myPeerConnection): boolean {
   if (localScreenStream) {
-    log("streaming screen");
     const screenTrack = localScreenStream.getVideoTracks()[0];
     // If camera is already using the videoSender, replace the track.
     // Screen share has priority.
     if (myPeerConnection["videoSender"]) {
-      log("replace screen track");
       myPeerConnection["videoSender"].replaceTrack(screenTrack);
     }
     else {
-      log("add new screen track");
       myPeerConnection["videoSender"] = myPeerConnection.addTrack(
         screenTrack,
         // localStream
@@ -264,7 +247,6 @@ function muteScreen(myPeerConnection) {
 const screenButton = document.getElementById("toggle_screen");
 screenButton.onclick = () => {
   if (localScreenStream) {
-    console.log("Turning off screen sharing...");
     screenButton.innerText = "screen [off]";
     screenButton.classList.remove("active");
 
@@ -281,16 +263,13 @@ screenButton.onclick = () => {
 
   }
   else {
-    console.log("Turning on screen sharing...");
     // Request access to screen
     (navigator.mediaDevices as any)
       .getDisplayMedia({})
       .then((stream) => {
-        console.log("screen stream initialized");
         screenButton.innerText = "screen [on]";
         screenButton.classList.add("active");
         localScreenStream = stream;
-        log(Object.values(peerConnections).length + " peer connections (screen)");
         // Send tracks to peerConnections
         Object.values(peerConnections).forEach((myPeerConnection) =>
           sendScreen(myPeerConnection)

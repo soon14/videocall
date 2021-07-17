@@ -73,7 +73,8 @@ function connect() {
 
 /************** SIGNALLING EVENT HANDLERS ************************/
 function handleGetRoomParticipants(participants: string[]) {
-  log("Received participants: " + participants);
+  log("Amount of other people in room: " + participants.length);
+  receiveMsg(participants.length + " other people in this room!");
   participants.forEach((userId) => createPeerConnection(userId));
 }
 
@@ -88,7 +89,6 @@ function handleMediaOffer(msg: Message) {
     log("Creating peer connection after receiving media offer");
     myPeerConnection = createPeerConnection(msg.source);
   }
-  console.log(msg.sdp);
   myPeerConnection
     .setRemoteDescription(new RTCSessionDescription(msg.sdp))
     .then(() => {

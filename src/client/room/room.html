@@ -15,36 +15,31 @@
 <body>
     <div id="root">
         <button id="enter_room">Click to enter room</button>
-        <div id="video_container">
-            <video id="local_video" autoplay muted></video>
-        </div>
-        <div id="button_container">
-            <button id="toggle_audio">mic [off]</button>
-            <button id="toggle_video">camera [off]</button>
-            <button id="toggle_screen">screen [off]</button>
-            <button id="disconnect">disconnect</button>
-        </div>
-        <button id="toggle_log">log</button>
-        <div id="log"></div>
+        <div id="toggle_hide_overlay"></div>
         <div id="connection_status"></div>
-        <div id="chat">
-            <button id="chat_toggle">Chat</button>
-            <textarea id="chat_input"></textarea>
-            <button id="chat_button">send</button>
-            <button id="hide_chat">hide</button>
-            <div id="chat_screen"></div>
-        </div>
-        <!-- <div id="disconnect_options">
-            <div id="disconnect_options_wrapper">
-                <div>
-                    <button id="destroy_button" class="disconnect_option">Destroy room</button> after <input
-                        id="destroy_timer" type="number" value=0> minutes
-                </div>
-                <button id="disconnect_button" class="disconnect_option">Just disconnect me</button>
-                <button id="cancel_disconnect" class="disconnect_option">Cancel</button>
+        <div id="dissapearing_content_container">
+            <div id="button_container">
+                <button id="toggle_audio">mic [off]</button>
+                <button id="toggle_video">camera [off]</button>
+                <button id="toggle_screen">screen [off]</button>
+                <button id="disconnect">disconnect</button>
             </div>
-        </div> -->
-        <!-- <div id="timer_alert"></div> -->
+            <button id="toggle_log">log</button>
+            <div id="log"></div>
+        </div>
+        <div id="video_container">
+        </div>
+        <div id="always_visible_content">
+
+            <video id="local_video" autoplay muted></video>
+            <div id="chat_input_container">
+                <input id="chat_input" /><button id="chat_button">></button>
+            </div>
+        </div>
+        <div id="chat" class="hidden">
+            <div id="chat_screen" class="strokedText"></div>
+            <button id="hide_chat" class="strokedText">hide</button>
+        </div>
     </div>
 </body>
 

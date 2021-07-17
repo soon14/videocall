@@ -90,31 +90,23 @@ export function removeVideo(source: string) {
   }
 }
 
-const showHideElements = [
-  "button_container",
-  "toggle_log",
-  "connection_status",
-];
 
-const showHideElementsOnclicks = showHideElements.map((id) => document.getElementById(id).onclick);
+
+const toggle_hide_overlay = document.getElementById("toggle_hide_overlay");
+toggle_hide_overlay.onclick = showHide;
+const dissapearing_content_container = document.getElementById("dissapearing_content_container");
+
 let timeout;
-window.onmousemove = showHide;
-window.onclick = showHide;
-
 function showHide() {
   if (timeout) {
     clearTimeout(timeout);
   }
-  showHideElements.forEach((id, i) => {
-    const element = document.getElementById(id);
-    element.style.opacity = '1';
-    element.onclick = showHideElementsOnclicks[i]; // restore clicking behaviour when visible
-  });
+  // prevent unnecessary code executions
+  else {
+    dissapearing_content_container.classList.remove('hidden');
+  }
   timeout = setTimeout(() => {
-    showHideElements.forEach((id) => {
-      const element = document.getElementById(id);
-      element.style.opacity = '0';
-      element.onclick = null; // prevent clicking when not visible
-    });
+    dissapearing_content_container.classList.add('hidden');
+    timeout = null;
   }, 5000);
 };

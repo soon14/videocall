@@ -20,22 +20,19 @@ export function log(msg, color?: Color) {
 export function updateConnectionStatus(isConnected: boolean) {
     const el = document.getElementById("connection_status");
     if (isConnected) {
-        // el.innerText ="Connected";
         el.style.backgroundColor = "green";
     }
     else {
-        // el.innerText ="Disconnected";
         el.style.backgroundColor = "red";
     }
 }
 
 document.getElementById("toggle_log").onclick = (event) => {
-    event.stopPropagation(); // prevent window onclick listener
-    const log = document.getElementById("log");
-    if (log.style.display === 'block') {
-        log.style.display = 'none';
+    const logElement = document.getElementById("log");
+    if (logElement.style.display === 'block') {
+        logElement.style.display = 'none';
     }
     else {
-        log.style.display = 'block';
+        logElement.style.display = 'block';
     }
 };

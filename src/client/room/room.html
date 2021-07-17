@@ -17,28 +17,27 @@
         <button id="enter_room">Click to enter room</button>
         <div id="toggle_hide_overlay"></div>
         <div id="connection_status"></div>
-        <div id="dissapearing_content_container">
-            <div id="button_container">
-                <button id="toggle_audio">mic [off]</button>
-                <button id="toggle_video">camera [off]</button>
-                <button id="toggle_screen">screen [off]</button>
-                <button id="disconnect">disconnect</button>
-            </div>
-            <button id="toggle_log">log</button>
-            <div id="log"></div>
-        </div>
-        <div id="video_container">
-        </div>
-        <div id="always_visible_content">
-
-            <video id="local_video" autoplay muted></video>
-            <div id="chat_input_container">
-                <input id="chat_input" /><button id="chat_button">></button>
-            </div>
-        </div>
+        <div id="log"></div>
         <div id="chat" class="hidden">
             <div id="chat_screen" class="strokedText"></div>
             <button id="hide_chat" class="strokedText">hide</button>
+        </div>
+        <div id="dissapearing_content_container">
+            <div id="button_container">
+                <div id="mic_button_container" class="toggle_button_container"></div>
+                <div id="video_button_container" class="toggle_button_container"></div>
+                <div id="screen_button_container" class="toggle_button_container"></div>
+                <div id="disconnect_button_container" class="toggle_button_container"></div>
+            </div>
+            <button id="toggle_log">log</button>
+        </div>
+        <div id="video_container"></div>
+        <div id="always_visible_content">
+            <video id="local_video" autoplay muted></video>
+            <div id="chat_input_container">
+                <input id="chat_input" />
+                <div id="chat_button"></div>
+            </div>
         </div>
     </div>
 </body>

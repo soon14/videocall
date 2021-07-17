@@ -1,8 +1,9 @@
 import { handleNewICECandidateMsg, createPeerConnection, peerConnections } from "./peerConnection";
 import { Message } from "../../interfaces";
 import { Color, handleError, log, updateConnectionStatus } from "./debug";
-import { receiveMsg } from "./chat";
+import { MessageType, receiveMsg } from "./chat";
 import { createRemoteVideoElement, removeVideo } from "./dynamicHTML";
+import { disconnectButton } from "./icons";
 
 let ws: WebSocket;
 const roomId = window.location.pathname.split("/").pop();
@@ -46,7 +47,7 @@ function connect() {
           handleUserJoinedRoom(data.source);
           break;
         case "message":
-          receiveMsg(data.payload);
+          receiveMsg(data.payload, MessageType.RECIPIENT);
           break;
         case "disconnect":
           handleDisconnect(data.source);
@@ -74,13 +75,13 @@ function connect() {
 /************** SIGNALLING EVENT HANDLERS ************************/
 function handleGetRoomParticipants(participants: string[]) {
   log("Amount of other people in room: " + participants.length);
-  receiveMsg(participants.length + " other people in this room!");
+  receiveMsg(participants.length + " other people in this room!", MessageType.SYSTEM);
   participants.forEach((userId) => createPeerConnection(userId));
 }
 
 function handleUserJoinedRoom(remoteUserId: string) {
   createPeerConnection(remoteUserId);
-  receiveMsg("User " + remoteUserId.substring(0, 7) + " joined the room!");
+  receiveMsg("User " + remoteUserId.substring(0, 7) + " joined the room!", MessageType.SYSTEM);
 }
 
 function handleMediaOffer(msg: Message) {
@@ -129,7 +130,7 @@ function handleMediaAnswer(msg: Message) {
  */
 function handleDisconnect(source: string) {
   log("User " + source + " left the room");
-  receiveMsg("User " + source.substring(0, 7) + " has left the room!");
+  receiveMsg("User " + source.substring(0, 7) + " has left the room!", MessageType.SYSTEM);
   removeVideo(source);
   if (peerConnections[source]) {
     peerConnections[source].close();
@@ -154,7 +155,7 @@ export function sendToServer(msg: Message) {
 }
 
 
-document.getElementById("disconnect").onclick = () => {
+disconnectButton.onclick = () => {
   sendToServer({
     type: "disconnect",
   });

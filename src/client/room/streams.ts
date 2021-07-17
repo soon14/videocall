@@ -1,5 +1,6 @@
 import { peerConnections } from "./peerConnection";
 import { Color, handleError, log } from "./debug";
+import { micButton, screenButton, setIconEnabled, videoButton } from "./icons";
 
 let audioStream; // initialized after navigator.mediaDevices.getUserMedia
 let videoStream; // initialized after video toggle button is pressed
@@ -66,11 +67,14 @@ const localVideoElement: HTMLVideoElement = document.getElementById(
  */
 export function sendVideo(myPeerConnection): boolean {
   if (videoStream && myPeerConnection["videoSender"] == null) { // == instead of === to include 'undefined'
+    log("Sending video track");
     const videoTrack = videoStream.getVideoTracks()[0];
     if (myPeerConnection["videoSender"]) {
+      log("Replace video track");
       myPeerConnection["videoSender"].replaceTrack(videoTrack);
     }
     else {
+      log("New video track");
       myPeerConnection["videoSender"] = myPeerConnection.addTrack(
         videoTrack,
         // localStream
@@ -89,7 +93,6 @@ function muteVideo(myPeerConnection) {
   }
 }
 
-const videoButton = document.getElementById("toggle_video");
 videoButton.onclick = onVideoToggle;
 
 let cameraConstraints = {
@@ -116,8 +119,7 @@ localVideoElement.onclick = () => {
 
 function onVideoToggle() {
   if (videoStream) {
-    videoButton.innerText = "camera [off]";
-    videoButton.classList.remove("active");
+    setIconEnabled(videoButton, false);
 
     // Stop browser from accessing the device
     // https://stackoverflow.com/questions/11642926/stop-close-webcam-stream-which-is-opened-by-navigator-mediadevices-getusermedia
@@ -136,8 +138,7 @@ function onVideoToggle() {
     // Request access to device
     navigator.mediaDevices.getUserMedia(cameraConstraints)
       .then((stream) => {
-        videoButton.innerText = "camera [on]";
-        videoButton.classList.add("active");
+        setIconEnabled(videoButton, true);
         videoStream = stream;
         localVideoElement.srcObject = stream;
 
@@ -172,11 +173,9 @@ function muteAudio(myPeerConnection) {
   }
 }
 
-const audioButton = document.getElementById("toggle_audio");
-audioButton.onclick = () => {
+micButton.onclick = () => {
   if (audioStream) {
-    audioButton.innerText = "mic [off]";
-    audioButton.classList.remove("active");
+    setIconEnabled(micButton, false);
 
     // Stop browser from accessing this device
     // https://stackoverflow.com/questions/11642926/stop-close-webcam-stream-which-is-opened-by-navigator-mediadevices-getusermedia
@@ -195,8 +194,7 @@ audioButton.onclick = () => {
     // Request access to device
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then((stream) => {
-        audioButton.innerText = "mic [on]";
-        audioButton.classList.add("active");
+        setIconEnabled(micButton, true);
         audioStream = stream;
         // Send tracks to peerConnections
         Object.values(peerConnections).forEach((myPeerConnection) =>
@@ -244,11 +242,9 @@ function muteScreen(myPeerConnection) {
   }
 }
 
-const screenButton = document.getElementById("toggle_screen");
 screenButton.onclick = () => {
   if (localScreenStream) {
-    screenButton.innerText = "screen [off]";
-    screenButton.classList.remove("active");
+    setIconEnabled(screenButton, false);
 
     // Stop browser from accessing this device
     // https://stackoverflow.com/questions/11642926/stop-close-webcam-stream-which-is-opened-by-navigator-mediadevices-getusermedia
@@ -267,8 +263,7 @@ screenButton.onclick = () => {
     (navigator.mediaDevices as any)
       .getDisplayMedia({})
       .then((stream) => {
-        screenButton.innerText = "screen [on]";
-        screenButton.classList.add("active");
+        setIconEnabled(screenButton, true);
         localScreenStream = stream;
         // Send tracks to peerConnections
         Object.values(peerConnections).forEach((myPeerConnection) =>

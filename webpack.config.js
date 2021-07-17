@@ -5,7 +5,8 @@ module.exports = {
   devtool: "inline-source-map",
   entry: [
     path.resolve(__dirname, "src/client/room/socketConnection.ts"),
-    path.resolve(__dirname, "src/client/room/streams.ts")
+    path.resolve(__dirname, "src/client/room/streams.ts"),
+    path.resolve(__dirname, "src/client/room/icons.ts"),
   ],
   output: {
     path: path.resolve(__dirname, 'src/client/build/room'),

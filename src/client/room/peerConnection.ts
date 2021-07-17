@@ -3,7 +3,7 @@ import { Message } from "../../interfaces";
 import { sendToServer, localUserId } from "./socketConnection";
 import { sendVideo, sendAudio, sendScreen } from "./streams";
 import { createRemoteVideoElement, removeVideo } from "./dynamicHTML";
-import { receiveMsg } from "./chat";
+import { MessageType, receiveMsg } from "./chat";
 
 interface PeerConnection {
   [key: string]: RTCPeerConnection;
@@ -74,9 +74,7 @@ export function handleTrackEvent(event, remoteUserId) {
     log("New stream", Color.CYAN);
     const stream = new MediaStream();
     stream.addTrack(event.track);
-    console.log(event.track);
     peerConnections[remoteUserId]['inboundStream'] = stream;
-    console.log(element);
     element.srcObject = stream;
   }
   else {
@@ -141,11 +139,6 @@ export function handleGetRoomParticipants(participants: string[]) {
   participants.forEach((userId) => createPeerConnection(userId));
 }
 
-export function handleUserJoinedRoom(remoteUserId: string) {
-  createPeerConnection(remoteUserId);
-  receiveMsg("User " + remoteUserId.substring(0, 7) + " joined the room!");
-}
-
 export function handleMediaOffer(msg: Message) {
   let myPeerConnection = peerConnections[msg.source];
   if (myPeerConnection == null) {
@@ -186,17 +179,4 @@ export function handleMediaAnswer(msg: Message) {
   // sendAudio(peerConnections[msg.source]);
   // sendVideo(peerConnections[msg.source]);
   // sendScreen(peerConnections[msg.source]);
-}
-
-/**
- * Remove peer connection and video element after a remote user has disconnected from the room.
- */
-export function handleDisconnect(source: string) {
-  log("User " + source + " left the room");
-  receiveMsg("User " + source.substring(0, 7) + " has left the room!");
-  removeVideo(source);
-  if (peerConnections[source]) {
-    peerConnections[source].close();
-    delete peerConnections[source];
-  }
 }

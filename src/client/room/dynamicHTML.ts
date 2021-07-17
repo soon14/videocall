@@ -110,3 +110,6 @@ function showHide() {
     timeout = null;
   }, 5000);
 };
+
+// Call this immediately
+showHide();

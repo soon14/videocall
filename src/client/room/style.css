@@ -75,12 +75,23 @@ html, body, div#root{
 */
 #button_container {
     position: fixed;
-    bottom: 40px;
+    bottom: 40px; /*same as chat input height*/
+    margin-bottom: 15px;
     left: 0;
     width: 100%;
-    height: 9%;
-    min-height: 1em;
     display: flex;
+    justify-content: center;
+}
+
+.toggle_button_container {
+    height: 30px;
+    width: 30px;
+    padding: 10px;
+    background-color: #3c4043;
+    border: 5px solid #212425;
+    cursor: pointer;
+    border-radius: 50px;
+    margin: 0 9px 0 9px;
 }
 
 button {
@@ -91,35 +102,7 @@ button {
     cursor: pointer;
     flex: 1;
     box-shadow: 0 0 1px black;
-}
-
-
-#disconnect {
-    background-color: rgba(255, 0, 0, 0.7);
-}
-
-#toggle_video:hover {
-    background-color: rgba(0, 255, 255, 0.7);
-}
-
-#toggle_video.active {
-    background-color: rgba(0, 255, 255, 0.7);
-}
-
-#toggle_audio:hover {
-    background-color: rgba(0, 0, 255, 0.7);
-}
-
-#toggle_audio.active {
-    background-color: rgba(0, 0, 255, 0.7);
-}
-
-#toggle_screen:hover {
-    background-color: rgba(0, 255, 0, 0.7);
-}
-
-#toggle_screen.active {
-    background-color: rgba(0, 255, 0, 0.7);
+    outline: none;
 }
 
 /**
@@ -136,6 +119,7 @@ button {
     overflow-y: auto;
     margin: 0;
     padding: 0;
+    z-index: 5; /*above all else*/
 }
 
 #toggle_log {
@@ -170,9 +154,10 @@ button {
     position: fixed;
     top: 0;
     left: 0;
-    width: 40%;
-    max-height: calc(100% - 10em);
+    max-width: 40%;
+    max-height: calc(100% - 45px);
     color:rgb(255, 242, 0);
+    border-right: 1px solid rgba(255, 255, 255, 0.4);
     display: flex;
     flex-direction: column;
     z-index: 2; /*higher than toggle_hide_overlay*/
@@ -193,7 +178,7 @@ button {
 
 #chat_input_container {
     position: fixed;
-    bottom: 0;
+    bottom: 1px;
     left: 0;
     width: 100%;
     height: 40px; /*must match offset in button_container*/
@@ -202,22 +187,57 @@ button {
 
 #chat_input {
     flex: 1;
-    background-color: black;
     color: rgba(255, 255, 255, 0.8);
-    padding-left: 5px;
-    padding-right: 5px;
+    padding: 0 5px 0 20px;
+    font-size: 20px;
+    background-color: transparent;
+
+    border-top: 2px solid rgba(255, 255, 255, 0.6);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.6);
+    border-left: 2px solid rgba(255, 255, 255, 0.6);
+    border-top-left-radius: 50px;
+    border-bottom-left-radius: 50px;
+    border-right: none;
+
+    box-shadow: 
+     inset 0 1px black,
+     inset 1px 0 black,
+     inset 0 -1px black,
+     0 -1px black,
+     -1px 0 black,
+     0 1px black;
+
+    outline: none;
 }
 
 #chat_button {
-    flex: 0 0 40px; /*same as container heigth*/
+    flex: 0 0 20px; /*same as container heigth, but -20 because of padding*/
+    cursor: pointer;
+    padding: 10px;
+
+    border-top: 2px solid rgba(255, 255, 255, 0.6);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.6);
+    border-right: 2px solid rgba(255, 255, 255, 0.6);
+    border-top-right-radius: 50px;
+    border-bottom-right-radius: 50px;
+    border-left: none;
+
+    box-shadow: 
+     inset 0 1px black,
+     inset -1px 0 black,
+     inset 0 -1px black,
+     0 -1px black,
+     1px 0 black,
+     0 1px black;
+
+    outline: none;
 }
 
 #hide_chat {
-    margin-top: 1em;
     padding: 10px;
     width: fit-content;
-    color:rgb(255, 242, 0);
-    border-color: rgb(255, 242, 0);
+    color:rgb(255, 179, 0);
+    border-color: rgb(255, 179, 0);
     border-radius: 5px;
 }
 
@@ -241,4 +261,13 @@ input::-webkit-inner-spin-button {
 /* Firefox */
 input[type=number] {
     -moz-appearance: textfield;
+}
+
+@media only screen and (min-height: 600px) {
+    .toggle_button_container {
+        height: 40px;
+        width: 40px;
+        margin: 0 15px 0 15px;
+        padding: 20px;
+    }
 }

@@ -1,46 +1,60 @@
 export function log(...msgs: (string | number | object)[]) {
+  try {
     logWithColor(Color.FgWhite, msgs);
+  } catch (e) {
+    console.error('log() threw an exception. Falling back to console.log...');
+    console.log(msgs);
+  }
 }
 
-export function logError(...msgs: (string | number | object)[]) {
-    logWithColor(Color.FgRed, msgs);
+export function logError(msg: string | number | object) {
+  try {
+    logWithColor(Color.FgRed, msg);
+  } catch (e) {
+    console.error(
+      'logError() threw an exception. Falling back to console.error...'
+    );
+    console.error(msg);
+  }
 }
 
-export function logWithColor(color: Color, ...msgs: (string | number | object)[]) {
-    const msgString = msgs.map((msg) => typeof msg === 'object' ? JSON.stringify(msg) : msg).join(" ");
-    console.log("%s%s: %s%s", color, getDateString(), msgString, Color.Reset);
+export function logWithColor(color: Color, msg: string | number | object) {
+  const msgString = typeof msg === 'string' ? msg : JSON.stringify(msg);
+  console.log('%s%s: %s%s', color, getDateString(), msgString, Color.Reset);
 }
 
 function getDateString() {
-    const locale = "nl-NL";
-    const now = new Date();
-    return `[${now.toLocaleTimeString(locale)} ${now.toLocaleDateString(locale)}]`;
+  const locale = 'nl-NL';
+  const now = new Date();
+  return `[${now.toLocaleTimeString(locale)} ${now.toLocaleDateString(
+    locale
+  )}]`;
 }
 
 export enum Color {
-    Reset = "\x1b[0m",
-    Bright = "\x1b[1m",
-    Dim = "\x1b[2m",
-    Underscore = "\x1b[4m",
-    Blink = "\x1b[5m",
-    Reverse = "\x1b[7m",
-    Hidden = "\x1b[8m",
+  Reset = '\x1b[0m',
+  Bright = '\x1b[1m',
+  Dim = '\x1b[2m',
+  Underscore = '\x1b[4m',
+  Blink = '\x1b[5m',
+  Reverse = '\x1b[7m',
+  Hidden = '\x1b[8m',
 
-    FgBlack = "\x1b[30m",
-    FgRed = "\x1b[31m",
-    FgGreen = "\x1b[32m",
-    FgYellow = "\x1b[33m",
-    FgBlue = "\x1b[34m",
-    FgMagenta = "\x1b[35m",
-    FgCyan = "\x1b[36m",
-    FgWhite = "\x1b[37m",
+  FgBlack = '\x1b[30m',
+  FgRed = '\x1b[31m',
+  FgGreen = '\x1b[32m',
+  FgYellow = '\x1b[33m',
+  FgBlue = '\x1b[34m',
+  FgMagenta = '\x1b[35m',
+  FgCyan = '\x1b[36m',
+  FgWhite = '\x1b[37m',
 
-    // BgBlack = "\x1b[40m",
-    // BgRed = "\x1b[41m",
-    // BgGreen = "\x1b[42m",
-    // BgYellow = "\x1b[43m",
-    // BgBlue = "\x1b[44m",
-    // BgMagenta = "\x1b[45m",
-    // BgCyan = "\x1b[46m",
-    // BgWhite = "\x1b[47m",
+  // BgBlack = "\x1b[40m",
+  // BgRed = "\x1b[41m",
+  // BgGreen = "\x1b[42m",
+  // BgYellow = "\x1b[43m",
+  // BgBlue = "\x1b[44m",
+  // BgMagenta = "\x1b[45m",
+  // BgCyan = "\x1b[46m",
+  // BgWhite = "\x1b[47m",
 }

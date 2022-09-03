@@ -1,9 +1,14 @@
-import { handleNewICECandidateMsg, createPeerConnection, peerConnections } from "./peerConnection";
+import {
+  handleNewICECandidateMsg,
+  createPeerConnection,
+  peerConnections,
+} from "./peerConnection";
 import { Message } from "../../interfaces";
 import { Color, handleError, log, updateConnectionStatus } from "./debug";
 import { MessageType, receiveMsg } from "./chat";
 import { createRemoteVideoElement, removeVideo } from "./dynamicHTML";
 import { disconnectButton } from "./icons";
+require("./style.css");
 
 let ws: WebSocket;
 const roomId = window.location.pathname.split("/").pop();
@@ -16,7 +21,7 @@ enterRoomButton.onclick = () => {
 };
 
 function connect() {
-  ws = new WebSocket(`wss://${location.host}/videocall/socket`);
+  ws = new WebSocket(`ws://localhost:3000/socket`);
   ws.onopen = () => {
     updateConnectionStatus(true);
 
@@ -75,13 +80,19 @@ function connect() {
 /************** SIGNALLING EVENT HANDLERS ************************/
 function handleGetRoomParticipants(participants: string[]) {
   log("Amount of other people in room: " + participants.length);
-  receiveMsg(participants.length + " other people in this room!", MessageType.SYSTEM);
+  receiveMsg(
+    participants.length + " other people in this room!",
+    MessageType.SYSTEM
+  );
   participants.forEach((userId) => createPeerConnection(userId));
 }
 
 function handleUserJoinedRoom(remoteUserId: string) {
   createPeerConnection(remoteUserId);
-  receiveMsg("User " + remoteUserId.substring(0, 7) + " joined the room!", MessageType.SYSTEM);
+  receiveMsg(
+    "User " + remoteUserId.substring(0, 7) + " joined the room!",
+    MessageType.SYSTEM
+  );
 }
 
 function handleMediaOffer(msg: Message) {
@@ -130,7 +141,10 @@ function handleMediaAnswer(msg: Message) {
  */
 function handleDisconnect(source: string) {
   log("User " + source + " left the room");
-  receiveMsg("User " + source.substring(0, 7) + " has left the room!", MessageType.SYSTEM);
+  receiveMsg(
+    "User " + source.substring(0, 7) + " has left the room!",
+    MessageType.SYSTEM
+  );
   removeVideo(source);
   if (peerConnections[source]) {
     peerConnections[source].close();
@@ -145,19 +159,24 @@ function handleRegister(msg: Message) {
 }
 
 export function sendToServer(msg: Message) {
-  if (msg.type !== 'new-ice-candidate' && msg.type !== 'message' && msg.type !== 'register') {
+  if (
+    msg.type !== "new-ice-candidate" &&
+    msg.type !== "message" &&
+    msg.type !== "register"
+  ) {
     log("Sending " + msg.type, Color.GREEN);
   }
-  ws.send(JSON.stringify({
-    ...msg,
-    source: localUserId,
-  }));
+  ws.send(
+    JSON.stringify({
+      ...msg,
+      source: localUserId,
+    })
+  );
 }
-
 
 disconnectButton.onclick = () => {
   sendToServer({
     type: "disconnect",
   });
   window.location.href = "/videocall";
-}
+};

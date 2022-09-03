@@ -1,0 +1,40 @@
+import { MyWebSocket } from '../Socket/SocketConnection';
+
+export type Room = {
+  name: string;
+  participants: UserId[];
+};
+
+export type User = {
+  id: UserId;
+  name: string | null;
+  socket: MyWebSocket;
+  room: string;
+  disconnectTimer: NodeJS.Timeout | null; // id returned by setTimeOut()
+};
+
+export type UserId = string;
+export type RoomId = string;
+
+export type CreateUserArgs = {
+  name?: string;
+  ws: MyWebSocket;
+  roomId: RoomId;
+};
+
+export interface StateRepository {
+  getUserById(userId: UserId): void;
+  getRoomById(roomId: RoomId): void;
+
+  createUser(args: CreateUserArgs): UserId;
+
+  deleteUserById(userId: UserId): void;
+  deleteRoomById(roomId: RoomId): void;
+
+  clearDisconnectTimer(userId: UserId): void;
+  setDisconnectTimer(userId: UserId, callback: Function): void;
+
+  addUserToRoom(userId: UserId, roomId: RoomId): void;
+  // Return value indicates if the room was deleted.
+  removeUserFromRoom(userId: UserId, roomId: RoomId): boolean;
+}

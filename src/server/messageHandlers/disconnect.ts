@@ -1,18 +1,22 @@
-import { messageHandlerArgs } from ".";
-import { Color, logWithColor } from "../logger";
-import { IncomingSocketMessage } from "../Socket/SocketMessage";
+import { messageHandlerArgs } from '.';
+import { Color, logWithColor } from '../logger';
+import { StateRepository, User } from '../StateRepository/StateRepository';
+import { userToSocketUser } from '../util';
 
-interface DisconnectMessage extends IncomingSocketMessage {
+interface DisconnectArgs {
+  user: User;
+  state: StateRepository;
   implicit: boolean;
+  broadcastToRoom: messageHandlerArgs['broadcastToRoom'];
 }
 
 export function handleDisconnect({
   user,
-  msg,
   state,
+  implicit,
   broadcastToRoom,
-}: messageHandlerArgs<DisconnectMessage>) {
-  const implicitOrExplicit = msg.implicit ? "implicit" : "explicit";
+}: DisconnectArgs) {
+  const implicitOrExplicit = implicit ? 'implicit' : 'explicit';
 
   logWithColor(
     Color.FgMagenta,
@@ -22,7 +26,10 @@ export function handleDisconnect({
   const roomDeleted = state.removeUserFromRoom(user.id, user.room);
 
   if (!roomDeleted) {
-    broadcastToRoom(msg);
+    broadcastToRoom({
+      type: 'user-left-room',
+      source: userToSocketUser(user),
+    });
   }
 
   state.deleteUserById(user.id);

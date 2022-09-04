@@ -2,26 +2,27 @@ import { messageHandlerArgs } from '.';
 import { Color, logWithColor } from '../logger';
 import { MyWebSocket } from '../Socket/SocketConnection';
 import {
-  IncomingSocketMessage,
-  OutgoingSocketMessage,
-} from '../Socket/SocketMessage';
-import { MessagesToServer } from '../Socket/SocketTypes';
+  MessagesToServer,
+  MessageToClientValues,
+  SocketUser,
+} from '../Socket/SocketTypes';
 import { RoomId, UserId } from '../StateRepository/StateRepository';
+import { userToSocketUser } from '../util';
 
 type RegisterUserArgs = Pick<
   messageHandlerArgs<MessagesToServer['register']>,
   'msg' | 'state'
 > & {
   ws: MyWebSocket;
-  sendToUser: <T extends OutgoingSocketMessage>(
-    source: UserId,
+  sendToUser: (
+    source: SocketUser,
     target: UserId,
-    msg: T
+    msg: MessageToClientValues
   ) => void;
-  broadcastToRoom: <T extends OutgoingSocketMessage>(
-    source: UserId,
+  broadcastToRoom: (
+    source: SocketUser,
     roomId: RoomId,
-    msg: T
+    msg: MessageToClientValues
   ) => void;
 };
 
@@ -36,11 +37,14 @@ export function handleRegister({
 
   const { name, roomId } = msg;
 
-  const userId = state.createUser({ roomId, name, ws });
+  const user = state.createUser({ roomId, name, ws });
+  const userId = user.id;
   ws.userId = userId;
 
+  const socketUser = userToSocketUser(user);
+
   // let client know his id
-  sendToUser(userId, userId, {
+  sendToUser(socketUser, user.id, {
     type: 'register',
     userId,
   });
@@ -48,19 +52,16 @@ export function handleRegister({
   state.addUserToRoom(userId, roomId);
 
   // let others know that a new user joined the room, so they can send him offers
-  broadcastToRoom(userId, roomId, {
+  broadcastToRoom(socketUser, roomId, {
     type: 'user-joined-room',
-    userId,
-    name,
+    source: socketUser,
   });
 }
-
-interface ReconnectUserArgs extends IncomingSocketMessage {}
 
 export const handleReconnectingUser = ({
   user,
   state,
-}: messageHandlerArgs<ReconnectUserArgs>) => {
+}: messageHandlerArgs<MessagesToServer['register']>) => {
   logWithColor(Color.FgYellow, 'Reconnected user ' + user.id);
 
   state.clearDisconnectTimer(user.id);

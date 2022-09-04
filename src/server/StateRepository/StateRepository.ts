@@ -26,7 +26,7 @@ export interface StateRepository {
   getUserById(userId: UserId): void;
   getRoomById(roomId: RoomId): void;
 
-  createUser(args: CreateUserArgs): UserId;
+  createUser(args: CreateUserArgs): User;
 
   deleteUserById(userId: UserId): void;
   deleteRoomById(roomId: RoomId): void;

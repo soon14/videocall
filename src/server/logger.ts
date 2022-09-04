@@ -8,18 +8,17 @@ export function log(...msgs: (string | number | object)[]) {
 }
 
 export function logError(msg: string | number | object) {
-  try {
-    logWithColor(Color.FgRed, msg);
-  } catch (e) {
-    console.error(
-      'logError() threw an exception. Falling back to console.error...'
-    );
-    console.error(msg);
-  }
+  // console.error(
+  //   'logError() threw an exception. Falling back to console.error...'
+  // );
+  console.error(msg);
 }
 
 export function logWithColor(color: Color, msg: string | number | object) {
-  const msgString = typeof msg === 'string' ? msg : JSON.stringify(msg);
+  const msgString =
+    typeof msg === 'string'
+      ? msg
+      : JSON.stringify(msg, Object.getOwnPropertyNames(msg), 2);
   console.log('%s%s: %s%s', color, getDateString(), msgString, Color.Reset);
 }
 

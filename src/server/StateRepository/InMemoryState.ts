@@ -39,7 +39,7 @@ export class InMemoryState implements StateRepository {
     return room;
   }
 
-  createUser({ name: nickname, ws, roomId }: CreateUserArgs): UserId {
+  createUser({ name: nickname, ws, roomId }: CreateUserArgs): User {
     const userId = generateUserId();
 
     this.users[userId] = {
@@ -50,7 +50,7 @@ export class InMemoryState implements StateRepository {
       disconnectTimer: null,
     };
 
-    return userId;
+    return this.users[userId];
   }
 
   clearDisconnectTimer(userId: UserId) {

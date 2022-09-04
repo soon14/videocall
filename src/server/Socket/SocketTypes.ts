@@ -1,4 +1,4 @@
-export type User = {
+export type SocketUser = {
   id: string;
   name?: string;
 };
@@ -6,7 +6,7 @@ export type User = {
 // ******************** INCOMING ***********************
 
 type WithSource = {
-  source: User;
+  source: SocketUser;
 };
 
 export interface MessagesToClient {
@@ -22,6 +22,12 @@ export interface MessagesToClient {
   'new-ice-candidate': {
     type: 'new-ice-candidate';
   };
+  'user-joined-room': {
+    type: 'user-joined-room';
+  } & WithSource;
+  'user-left-room': {
+    type: 'user-left-room';
+  } & WithSource;
 }
 
 // This type enforces every message type to contain a "type" field.
@@ -33,7 +39,7 @@ export type MessageToClientValues = MessagesToClient[MessageToClientType];
 // ******************** OUTGOING ***********************
 
 type WithDestination = {
-  to: User;
+  to: SocketUser;
 };
 
 export interface MessagesToServer {
@@ -41,9 +47,6 @@ export interface MessagesToServer {
     type: 'register';
     roomId: string;
     name?: string;
-  };
-  disconnect: {
-    type: 'disconnect';
   };
   chatMessage: {
     type: 'chatMessage';

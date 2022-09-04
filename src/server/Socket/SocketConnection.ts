@@ -1,12 +1,21 @@
 import * as WebSocket from 'ws';
 import { Color, log, logError, logWithColor } from '../logger';
 import { messageTypeToRegisteredHandler } from '../messageHandlers';
+import { handleDisconnect } from '../messageHandlers/disconnect';
 import { handleRegister } from '../messageHandlers/register';
 import { InMemoryState } from '../StateRepository/InMemoryState';
-import { RoomId, UserId } from '../StateRepository/StateRepository';
-import { IncomingSocketMessage, OutgoingSocketMessage } from './SocketMessage';
+import { RoomId, User, UserId } from '../StateRepository/StateRepository';
+import { userToSocketUser } from '../util';
+import {
+  MessageToClientValues,
+  MessageToServerValues,
+  SocketUser,
+} from './SocketTypes';
 
 export const State = new InMemoryState();
+
+// https://www.iana.org/assignments/websocket/websocket.xhtml
+const EXPLICIT_DISCONNECT_CODE = 1000; // Normal Closure
 
 export const initWsServer = (wss: WebSocket.Server) => {
   wss.on('connection', (ws: MyWebSocket) => {
@@ -15,7 +24,7 @@ export const initWsServer = (wss: WebSocket.Server) => {
     ws.on('message', (msg: string) => {
       log(`Received message from ${ws.userId}`);
 
-      let parsedMessage: IncomingSocketMessage;
+      let parsedMessage: MessageToServerValues;
       try {
         parsedMessage = parseMessage(msg);
         log(parsedMessage);
@@ -28,7 +37,7 @@ export const initWsServer = (wss: WebSocket.Server) => {
     });
 
     // Implicit disconnect.
-    ws.on('close', () => {
+    ws.on('close', (code) => {
       try {
         const userId = ws.userId;
 
@@ -37,16 +46,16 @@ export const initWsServer = (wss: WebSocket.Server) => {
           return;
         }
 
-        logWithColor(Color.FgMagenta, `Lost connection with: ${userId}`);
+        const user = State.getUserById(userId);
 
-        State.setDisconnectTimer(userId, () => {
-          handleMessage(
-            {
-              type: 'disconnect',
-              implicit: true,
-            },
-            ws
-          );
+        const implicit = code !== EXPLICIT_DISCONNECT_CODE;
+
+        handleDisconnect({
+          implicit,
+          user,
+          state: State,
+          broadcastToRoom: (msg: MessageToClientValues) =>
+            broadcastToRoom(userToSocketUser(user), user.room, msg),
         });
       } catch (e: any) {
         logError('Error occuring inside close event handler');
@@ -56,15 +65,15 @@ export const initWsServer = (wss: WebSocket.Server) => {
   });
 };
 
-const handleMessage = <T extends IncomingSocketMessage>(
-  incomingMessage: T,
+const handleMessage = (
+  incomingMessage: MessageToServerValues,
   ws: MyWebSocket
 ) => {
   try {
     const userId = ws.userId;
     if (!userId && incomingMessage.type === 'register') {
       handleRegister({
-        msg: incomingMessage as any, // wtf?...
+        msg: incomingMessage,
         state: State,
         ws,
         sendToUser,
@@ -78,16 +87,17 @@ const handleMessage = <T extends IncomingSocketMessage>(
     }
 
     const user = State.getUserById(userId);
+    const socketUser = userToSocketUser(user);
     const type = incomingMessage.type;
 
     messageTypeToRegisteredHandler[type]({
       user,
       msg: incomingMessage,
       state: State,
-      sendToUser: <T extends OutgoingSocketMessage>(target: UserId, msg: T) =>
-        sendToUser(userId, target, msg),
-      broadcastToRoom: <T extends OutgoingSocketMessage>(msg: T) =>
-        broadcastToRoom(userId, user.room, msg),
+      sendToUser: (target: UserId, msg: MessageToClientValues) =>
+        sendToUser(socketUser, target, msg),
+      broadcastToRoom: (msg: MessageToClientValues) =>
+        broadcastToRoom(socketUser, user.room, msg),
     });
   } catch (e: any) {
     logError('Error occurred in handleMessage()');
@@ -95,7 +105,7 @@ const handleMessage = <T extends IncomingSocketMessage>(
   }
 };
 
-const parseMessage = (msg: string): IncomingSocketMessage => {
+const parseMessage = (msg: string): MessageToServerValues => {
   const res = JSON.parse(msg);
   if (!res.type) {
     throw new Error('Message does not contain type');
@@ -103,24 +113,25 @@ const parseMessage = (msg: string): IncomingSocketMessage => {
   return res;
 };
 
-const notifyError = (ws: MyWebSocket, message: string) => {
-  if (!ws.userId) {
-    logError('Unable to notify user about error because of missing userId');
-    return;
-  }
+// const notifyError = (ws: MyWebSocket, message: string) => {
+//   if (!ws.userId) {
+//     logError('Unable to notify user about error because of missing userId');
+//     return;
+//   }
 
-  try {
-    sendToUser(ws.userId, ws, {
-      type: 'error',
-      message,
-    });
-  } catch (e) {
-    logError(`Failed to send error message to ${ws.userId}`);
-  }
-};
+//   try {
+//     const socketUser = userToSocketUser(State.getUserById(ws.userId));
+//     sendToUser(socketUser, ws, {
+//       type: 'error',
+//       message,
+//     });
+//   } catch (e) {
+//     logError(`Failed to send error message to ${ws.userId}`);
+//   }
+// };
 
 const handleError = (
-  msg: IncomingSocketMessage,
+  msg: MessageToServerValues,
   err: Error,
   ws: MyWebSocket
 ) => {
@@ -128,11 +139,11 @@ const handleError = (
   logError(err.stack || '');
 
   const message = `Execution of message with type ${msg.type} failed.`;
-  notifyError(ws, message);
+  // notifyError(ws, message);
 };
 
-function sendToUser<T extends OutgoingSocketMessage>(
-  source: UserId,
+function sendToUser<T extends MessageToClientValues>(
+  source: SocketUser,
   target: UserId | MyWebSocket,
   msg: T
 ) {
@@ -150,8 +161,8 @@ function sendToUser<T extends OutgoingSocketMessage>(
   socket.send(msgString);
 }
 
-function broadcastToRoom<T extends OutgoingSocketMessage>(
-  source: UserId,
+function broadcastToRoom<T extends MessageToClientValues>(
+  source: SocketUser,
   roomId: RoomId,
   msg: T
 ) {
@@ -160,7 +171,7 @@ function broadcastToRoom<T extends OutgoingSocketMessage>(
 
   room.participants.forEach((participant) => {
     // TODO: is this a safe comparison?...
-    if (source !== participant) {
+    if (source.id !== participant) {
       sendToUser(source, participant, msg);
     }
   });

@@ -1,39 +1,38 @@
 import {
-  incomingMessageType,
-  IncomingSocketMessage,
-} from "../Socket/SocketMessage";
+  MessageToClientValues,
+  MessageToServerType,
+  MessageToServerValues,
+} from '../Socket/SocketTypes';
 import {
   StateRepository,
   User,
   UserId,
-} from "../StateRepository/StateRepository";
-import { handleChatMessage } from "./chatMessage";
-import { handleDisconnect } from "./disconnect";
-import { handleReconnectingUser } from "./register";
+} from '../StateRepository/StateRepository';
+import { handleChatMessage } from './chatMessage';
+import { handleReconnectingUser } from './register';
 
-export type messageHandlerArgs<T extends IncomingSocketMessage> = {
+export type messageHandlerArgs<T extends MessageToServerValues | {} = {}> = {
   user: User;
   msg: T;
   state: StateRepository;
-  sendToUser: (target: UserId, msg: T) => void;
-  broadcastToRoom: (msg: T) => void;
+  sendToUser: (target: UserId, msg: MessageToClientValues) => void;
+  broadcastToRoom: (msg: MessageToClientValues) => void;
 };
 
 type messageHandler = (args: messageHandlerArgs<any>) => void;
 
 const notImplemented = () => {
-  throw new Error("Not implemented");
+  throw new Error('Not implemented');
 };
 
 export const messageTypeToRegisteredHandler: {
-  [type in incomingMessageType]: messageHandler;
+  [type in MessageToServerType]: messageHandler;
 } = {
   register: handleReconnectingUser,
-  disconnect: handleDisconnect,
-  getRoomParticipants: notImplemented,
-  "media-answer": notImplemented,
-  "media-offer": notImplemented,
   chatMessage: handleChatMessage,
-  "new-ice-candidate": notImplemented,
-  "user-joined-room": notImplemented,
+  // getRoomParticipants: notImplemented,
+  // 'media-answer': notImplemented,
+  // 'media-offer': notImplemented,
+  // 'new-ice-candidate': notImplemented,
+  // 'user-joined-room': notImplemented,
 };

@@ -1,16 +1,15 @@
-import { messageHandlerArgs } from ".";
-import { IncomingSocketMessage } from "../Socket/SocketMessage";
-
-interface ChatMessageMessage extends IncomingSocketMessage {
-  text: string;
-}
+import { messageHandlerArgs } from '.';
+import { MessagesToServer } from '../Socket/SocketTypes';
+import { userToSocketUser } from '../util';
 
 export const handleChatMessage = ({
   broadcastToRoom,
   msg,
-}: messageHandlerArgs<ChatMessageMessage>) => {
+  user,
+}: messageHandlerArgs<MessagesToServer['chatMessage']>) => {
   broadcastToRoom({
-    type: "chatMessage",
+    type: 'chatMessage',
     text: msg.text,
+    source: userToSocketUser(user),
   });
 };

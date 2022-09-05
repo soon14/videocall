@@ -73,7 +73,7 @@ export class InMemoryState implements StateRepository {
     user.disconnectTimer = disconnectTimer;
   }
 
-  addUserToRoom(userId: string, roomId: string): void {
+  addUserToRoom(userId: string, roomId: string): Room {
     let room = this.rooms[roomId];
 
     if (room) {
@@ -89,6 +89,8 @@ export class InMemoryState implements StateRepository {
         `Created room ${roomId} with user ${userId}`
       );
     }
+
+    return this.rooms[roomId];
   }
 
   removeUserFromRoom(userId: string, roomId: string): boolean {

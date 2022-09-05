@@ -1,6 +1,6 @@
 import { messageHandlerArgs } from '.';
 import { Color, logWithColor } from '../logger';
-import { MyWebSocket } from '../Socket/SocketConnection';
+import { MyWebSocket, State } from '../Socket/SocketConnection';
 import {
   MessagesToServer,
   MessageToClientValues,
@@ -43,13 +43,18 @@ export function handleRegister({
 
   const socketUser = userToSocketUser(user);
 
+  const room = state.addUserToRoom(userId, roomId);
+
+  const otherUsers = room.participants
+    .filter((participant) => participant !== userId)
+    .map((participant) => userToSocketUser(State.getUserById(participant)));
+
   // let client know his id
   sendToUser(socketUser, user.id, {
     type: 'register',
     userId,
+    usersInRoom: otherUsers,
   });
-
-  state.addUserToRoom(userId, roomId);
 
   // let others know that a new user joined the room, so they can send him offers
   broadcastToRoom(socketUser, roomId, {

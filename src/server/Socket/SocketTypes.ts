@@ -13,21 +13,33 @@ export interface MessagesToClient {
   register: {
     type: 'register';
     userId: string;
+    usersInRoom: SocketUser[];
   };
   chatMessage: {
     type: 'chatMessage';
     text: string;
   } & WithSource;
-
   'new-ice-candidate': {
     type: 'new-ice-candidate';
-  };
-  'user-joined-room': {
-    type: 'user-joined-room';
   } & WithSource;
   'user-left-room': {
     type: 'user-left-room';
   } & WithSource;
+  'user-joined-room': {
+    type: 'user-joined-room';
+  } & WithSource;
+  'media-offer': {
+    type: 'media-offer';
+    sdp: RTCSessionDescription;
+  } & WithSource;
+  'media-answer': {
+    type: 'media-answer';
+    sdp: RTCSessionDescription;
+  } & WithSource;
+  error: {
+    type: 'error';
+    error: string;
+  };
 }
 
 // This type enforces every message type to contain a "type" field.
@@ -38,11 +50,7 @@ export type MessageToClientValues = MessagesToClient[MessageToClientType];
 
 // ******************** OUTGOING ***********************
 
-type WithDestination = {
-  to: SocketUser;
-};
-
-export interface MessagesToServer {
+export interface MessagesToServer extends RelayMessages {
   register: {
     type: 'register';
     roomId: string;
@@ -52,6 +60,25 @@ export interface MessagesToServer {
     type: 'chatMessage';
     text: string;
   };
+}
+
+type WithDestination = {
+  target: string;
+};
+
+export interface RelayMessages {
+  'new-ice-candidate': {
+    type: 'new-ice-candidate';
+    candidate: RTCIceCandidate;
+  } & WithDestination;
+  'media-offer': {
+    type: 'media-offer';
+    sdp: RTCSessionDescription;
+  } & WithDestination;
+  'media-answer': {
+    type: 'media-answer';
+    sdp: RTCSessionDescription;
+  } & WithDestination;
 }
 
 // This type enforces every message type to contain a "type" field.

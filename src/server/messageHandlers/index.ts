@@ -10,6 +10,7 @@ import {
 } from '../StateRepository/StateRepository';
 import { handleChatMessage } from './chatMessage';
 import { handleReconnectingUser } from './register';
+import { relayMessage } from './relayMessage';
 
 export type messageHandlerArgs<T extends MessageToServerValues | {} = {}> = {
   user: User;
@@ -21,18 +22,12 @@ export type messageHandlerArgs<T extends MessageToServerValues | {} = {}> = {
 
 type messageHandler = (args: messageHandlerArgs<any>) => void;
 
-const notImplemented = () => {
-  throw new Error('Not implemented');
-};
-
-export const messageTypeToRegisteredHandler: {
+export const messageTypeToHandler: {
   [type in MessageToServerType]: messageHandler;
 } = {
   register: handleReconnectingUser,
   chatMessage: handleChatMessage,
-  // getRoomParticipants: notImplemented,
-  // 'media-answer': notImplemented,
-  // 'media-offer': notImplemented,
-  // 'new-ice-candidate': notImplemented,
-  // 'user-joined-room': notImplemented,
+  'media-answer': relayMessage,
+  'media-offer': relayMessage,
+  'new-ice-candidate': relayMessage,
 };

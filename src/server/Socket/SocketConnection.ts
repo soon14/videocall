@@ -1,10 +1,10 @@
 import * as WebSocket from 'ws';
 import { Color, log, logError, logWithColor } from '../logger';
-import { messageTypeToRegisteredHandler } from '../messageHandlers';
+import { messageTypeToHandler } from '../messageHandlers';
 import { handleDisconnect } from '../messageHandlers/disconnect';
 import { handleRegister } from '../messageHandlers/register';
 import { InMemoryState } from '../StateRepository/InMemoryState';
-import { RoomId, User, UserId } from '../StateRepository/StateRepository';
+import { RoomId, UserId } from '../StateRepository/StateRepository';
 import { userToSocketUser } from '../util';
 import {
   MessageToClientValues,
@@ -90,7 +90,7 @@ const handleMessage = (
     const socketUser = userToSocketUser(user);
     const type = incomingMessage.type;
 
-    messageTypeToRegisteredHandler[type]({
+    messageTypeToHandler[type]({
       user,
       msg: incomingMessage,
       state: State,
@@ -113,22 +113,22 @@ const parseMessage = (msg: string): MessageToServerValues => {
   return res;
 };
 
-// const notifyError = (ws: MyWebSocket, message: string) => {
-//   if (!ws.userId) {
-//     logError('Unable to notify user about error because of missing userId');
-//     return;
-//   }
+const notifyError = (ws: MyWebSocket, error: string) => {
+  if (!ws.userId) {
+    logError('Unable to notify user about error because of missing userId');
+    return;
+  }
 
-//   try {
-//     const socketUser = userToSocketUser(State.getUserById(ws.userId));
-//     sendToUser(socketUser, ws, {
-//       type: 'error',
-//       message,
-//     });
-//   } catch (e) {
-//     logError(`Failed to send error message to ${ws.userId}`);
-//   }
-// };
+  try {
+    const socketUser = userToSocketUser(State.getUserById(ws.userId));
+    sendToUser(socketUser, ws, {
+      type: 'error',
+      error,
+    });
+  } catch (e) {
+    logError(`Failed to send error message to ${ws.userId}`);
+  }
+};
 
 const handleError = (
   msg: MessageToServerValues,
@@ -139,7 +139,7 @@ const handleError = (
   logError(err.stack || '');
 
   const message = `Execution of message with type ${msg.type} failed.`;
-  // notifyError(ws, message);
+  notifyError(ws, message);
 };
 
 function sendToUser<T extends MessageToClientValues>(

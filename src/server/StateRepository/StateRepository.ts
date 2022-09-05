@@ -34,7 +34,7 @@ export interface StateRepository {
   clearDisconnectTimer(userId: UserId): void;
   setDisconnectTimer(userId: UserId, callback: Function): void;
 
-  addUserToRoom(userId: UserId, roomId: RoomId): void;
+  addUserToRoom(userId: UserId, roomId: RoomId): Room;
   // Return value indicates if the room was deleted.
   removeUserFromRoom(userId: UserId, roomId: RoomId): boolean;
 }

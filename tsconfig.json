@@ -5,7 +5,7 @@
     "target": "es6",
     "moduleResolution": "node",
     "skipLibCheck": true,
-    "outDir": "build/server"
+    "outDir": "build"
     // "sourceMap": true,
   },
   "include": ["src/server/**/*"],

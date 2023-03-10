@@ -1,3 +1,5 @@
+export type StreamType = "camera" | "screen";
+
 export type SocketUser = {
   id: string;
   name?: string;
@@ -11,40 +13,44 @@ type WithSource = {
 
 export interface MessagesToClient {
   register: {
-    type: 'register';
+    type: "register";
     userId: string;
     usersInRoom: SocketUser[];
   };
   chatMessage: {
-    type: 'chatMessage';
+    type: "chatMessage";
     text: string;
   } & WithSource;
-  'new-ice-candidate': {
-    type: 'new-ice-candidate';
+  "new-ice-candidate": {
+    type: "new-ice-candidate";
+    candidate: RTCIceCandidate;
+    streamType: StreamType;
   } & WithSource;
-  'user-left-room': {
-    type: 'user-left-room';
+  "user-left-room": {
+    type: "user-left-room";
   } & WithSource;
-  'user-joined-room': {
-    type: 'user-joined-room';
+  "user-joined-room": {
+    type: "user-joined-room";
   } & WithSource;
-  'media-offer': {
-    type: 'media-offer';
+  "media-offer": {
+    type: "media-offer";
     sdp: RTCSessionDescription;
+    streamType: StreamType;
   } & WithSource;
-  'media-answer': {
-    type: 'media-answer';
+  "media-answer": {
+    type: "media-answer";
     sdp: RTCSessionDescription;
+    streamType: StreamType;
   } & WithSource;
   error: {
-    type: 'error';
+    type: "error";
     error: string;
   };
 }
 
 // This type enforces every message type to contain a "type" field.
 export type MessageToClientType =
-  MessagesToClient[keyof MessagesToClient]['type'];
+  MessagesToClient[keyof MessagesToClient]["type"];
 // This type enforces every key to match its "type" field.
 export type MessageToClientValues = MessagesToClient[MessageToClientType];
 
@@ -52,12 +58,12 @@ export type MessageToClientValues = MessagesToClient[MessageToClientType];
 
 export interface MessagesToServer extends RelayMessages {
   register: {
-    type: 'register';
+    type: "register";
     roomId: string;
     name?: string;
   };
   chatMessage: {
-    type: 'chatMessage';
+    type: "chatMessage";
     text: string;
   };
 }
@@ -67,22 +73,25 @@ type WithDestination = {
 };
 
 export interface RelayMessages {
-  'new-ice-candidate': {
-    type: 'new-ice-candidate';
+  "new-ice-candidate": {
+    type: "new-ice-candidate";
     candidate: RTCIceCandidate;
+    streamType: StreamType;
   } & WithDestination;
-  'media-offer': {
-    type: 'media-offer';
+  "media-offer": {
+    type: "media-offer";
     sdp: RTCSessionDescription;
+    streamType: StreamType;
   } & WithDestination;
-  'media-answer': {
-    type: 'media-answer';
+  "media-answer": {
+    type: "media-answer";
     sdp: RTCSessionDescription;
+    streamType: StreamType;
   } & WithDestination;
 }
 
 // This type enforces every message type to contain a "type" field.
 export type MessageToServerType =
-  MessagesToServer[keyof MessagesToServer]['type'];
+  MessagesToServer[keyof MessagesToServer]["type"];
 // This type enforces every key to match its "type" field.
 export type MessageToServerValues = MessagesToServer[MessageToServerType];

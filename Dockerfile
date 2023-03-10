@@ -22,4 +22,4 @@ CMD [ "npm", "start" ]
 
 # RUN npm start
 
-USER node
+# USER node

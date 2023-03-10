@@ -17,11 +17,3 @@ wss.on("listening", () => {
 });
 
 initWsServer(wss);
-
-// const app = express();
-
-// const httpPort = 8080;
-
-// http.createServer(app).listen(httpPort, () => {
-//   logWithColor(Color.FgGreen, `HTTP server started on port ${httpPort}`);
-// });

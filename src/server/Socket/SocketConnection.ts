@@ -1,16 +1,16 @@
-import * as WebSocket from 'ws';
-import { Color, log, logError, logWithColor } from '../logger';
-import { messageTypeToHandler } from '../messageHandlers';
-import { handleDisconnect } from '../messageHandlers/disconnect';
-import { handleRegister } from '../messageHandlers/register';
-import { InMemoryState } from '../StateRepository/InMemoryState';
-import { RoomId, UserId } from '../StateRepository/StateRepository';
-import { userToSocketUser } from '../util';
+import * as WebSocket from "ws";
+import { Color, log, logError, logWithColor } from "../logger";
+import { messageTypeToHandler } from "../messageHandlers";
+import { handleDisconnect } from "../messageHandlers/disconnect";
+import { handleRegister } from "../messageHandlers/register";
+import { InMemoryState } from "../StateRepository/InMemoryState";
+import { RoomId, UserId } from "../StateRepository/StateRepository";
+import { userToSocketUser } from "../util";
 import {
   MessageToClientValues,
   MessageToServerValues,
   SocketUser,
-} from './SocketTypes';
+} from "./SocketTypes";
 
 export const State = new InMemoryState();
 
@@ -18,10 +18,10 @@ export const State = new InMemoryState();
 const EXPLICIT_DISCONNECT_CODE = 1000; // Normal Closure
 
 export const initWsServer = (wss: WebSocket.Server) => {
-  wss.on('connection', (ws: MyWebSocket) => {
-    logWithColor(Color.FgYellow, 'WebSocket connected');
+  wss.on("connection", (ws: MyWebSocket) => {
+    logWithColor(Color.FgYellow, "WebSocket connected");
 
-    ws.on('message', (msg: string) => {
+    ws.on("message", (msg: string) => {
       log(`Received message from ${ws.userId}`);
 
       let parsedMessage: MessageToServerValues;
@@ -29,7 +29,7 @@ export const initWsServer = (wss: WebSocket.Server) => {
         parsedMessage = parseMessage(msg);
         log(parsedMessage);
       } catch (e) {
-        logError('Failed to parse message');
+        logError("Failed to parse message");
         return;
       }
 
@@ -37,18 +37,22 @@ export const initWsServer = (wss: WebSocket.Server) => {
     });
 
     // Implicit disconnect.
-    ws.on('close', (code) => {
+    ws.on("close", (code) => {
       try {
         const userId = ws.userId;
 
+        const implicit = code !== EXPLICIT_DISCONNECT_CODE;
+
         if (!userId) {
-          logError('Received close event for ws without userId');
+          logError(
+            `Received ${
+              implicit ? "implicit" : "explicit"
+            } close event for ws without userId`
+          );
           return;
         }
 
         const user = State.getUserById(userId);
-
-        const implicit = code !== EXPLICIT_DISCONNECT_CODE;
 
         handleDisconnect({
           implicit,
@@ -58,7 +62,7 @@ export const initWsServer = (wss: WebSocket.Server) => {
             broadcastToRoom(userToSocketUser(user), user.room, msg),
         });
       } catch (e: any) {
-        logError('Error occuring inside close event handler');
+        logError("Error occuring inside close event handler");
         logError(e);
       }
     });
@@ -71,7 +75,7 @@ const handleMessage = (
 ) => {
   try {
     const userId = ws.userId;
-    if (!userId && incomingMessage.type === 'register') {
+    if (!userId && incomingMessage.type === "register") {
       handleRegister({
         msg: incomingMessage,
         state: State,
@@ -83,7 +87,7 @@ const handleMessage = (
     }
 
     if (!userId) {
-      throw new Error('UserId not defined on ws');
+      throw new Error("UserId not defined on ws");
     }
 
     const user = State.getUserById(userId);
@@ -100,7 +104,7 @@ const handleMessage = (
         broadcastToRoom(socketUser, user.room, msg),
     });
   } catch (e: any) {
-    logError('Error occurred in handleMessage()');
+    logError("Error occurred in handleMessage()");
     handleError(incomingMessage, e, ws);
   }
 };
@@ -108,21 +112,21 @@ const handleMessage = (
 const parseMessage = (msg: string): MessageToServerValues => {
   const res = JSON.parse(msg);
   if (!res.type) {
-    throw new Error('Message does not contain type');
+    throw new Error("Message does not contain type");
   }
   return res;
 };
 
 const notifyError = (ws: MyWebSocket, error: string) => {
   if (!ws.userId) {
-    logError('Unable to notify user about error because of missing userId');
+    logError("Unable to notify user about error because of missing userId");
     return;
   }
 
   try {
     const socketUser = userToSocketUser(State.getUserById(ws.userId));
     sendToUser(socketUser, ws, {
-      type: 'error',
+      type: "error",
       error,
     });
   } catch (e) {
@@ -136,7 +140,7 @@ const handleError = (
   ws: MyWebSocket
 ) => {
   logError(`Error occurred for message type: ${msg.type}: ${err.message}`);
-  logError(err.stack || '');
+  logError(err.stack || "");
 
   const message = `Execution of message with type ${msg.type} failed.`;
   notifyError(ws, message);
@@ -148,7 +152,7 @@ function sendToUser<T extends MessageToClientValues>(
   msg: T
 ) {
   const socket =
-    typeof target === 'string' ? State.getUserById(target).socket : target;
+    typeof target === "string" ? State.getUserById(target).socket : target;
 
   const msgWithSource = {
     ...msg,

@@ -1,17 +1,17 @@
-import { messageHandlerArgs } from '.';
-import { Color, logWithColor } from '../logger';
-import { MyWebSocket, State } from '../Socket/SocketConnection';
+import { messageHandlerArgs } from ".";
+import { Color, logWithColor } from "../logger";
+import { MyWebSocket, State } from "../Socket/SocketConnection";
 import {
   MessagesToServer,
   MessageToClientValues,
   SocketUser,
-} from '../Socket/SocketTypes';
-import { RoomId, UserId } from '../StateRepository/StateRepository';
-import { userToSocketUser } from '../util';
+} from "../Socket/SocketTypes";
+import { RoomId, UserId } from "../StateRepository/StateRepository";
+import { userToSocketUser } from "../util";
 
 type RegisterUserArgs = Pick<
-  messageHandlerArgs<MessagesToServer['register']>,
-  'msg' | 'state'
+  messageHandlerArgs<MessagesToServer["register"]>,
+  "msg" | "state"
 > & {
   ws: MyWebSocket;
   sendToUser: (
@@ -35,7 +35,9 @@ export function handleRegister({
 }: RegisterUserArgs) {
   logWithColor(Color.FgGreen, `handleRegister\n${JSON.stringify(msg)}`);
 
-  const { name, roomId } = msg;
+  const { name } = msg;
+
+  const roomId = msg.roomId.toLowerCase();
 
   const user = state.createUser({ roomId, name, ws });
   const userId = user.id;
@@ -51,14 +53,14 @@ export function handleRegister({
 
   // let client know his id
   sendToUser(socketUser, user.id, {
-    type: 'register',
+    type: "register",
     userId,
     usersInRoom: otherUsers,
   });
 
   // let others know that a new user joined the room, so they can send him offers
   broadcastToRoom(socketUser, roomId, {
-    type: 'user-joined-room',
+    type: "user-joined-room",
     source: socketUser,
   });
 }
@@ -66,8 +68,8 @@ export function handleRegister({
 export const handleReconnectingUser = ({
   user,
   state,
-}: messageHandlerArgs<MessagesToServer['register']>) => {
-  logWithColor(Color.FgYellow, 'Reconnected user ' + user.id);
+}: messageHandlerArgs<MessagesToServer["register"]>) => {
+  logWithColor(Color.FgYellow, "Reconnected user " + user.id);
 
   state.clearDisconnectTimer(user.id);
 };

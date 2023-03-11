@@ -1,36 +1,48 @@
-import { messageHandlerArgs } from ".";
-import { Color, logWithColor } from "../logger";
-import { StateRepository, User } from "../StateRepository/StateRepository";
+import { Color, logError, logWithColor } from "../logger";
+import { broadcastToRoom } from "../Socket/MessageSenders";
+import { State } from "../Socket/SocketConnection";
+import {
+  StateRepository,
+  User,
+  UserId,
+} from "../StateRepository/StateRepository";
 import { userToSocketUser } from "../util";
 
-interface DisconnectArgs {
-  user: User;
-  state: StateRepository;
-  implicit: boolean;
-  broadcastToRoom: messageHandlerArgs["broadcastToRoom"];
+type DisconnectType = "implicit" | "explicit";
+
+interface Args {
+  userId: UserId | null;
+  disconnectType: DisconnectType;
 }
 
-export function handleDisconnect({
-  user,
-  state,
-  implicit,
-  broadcastToRoom,
-}: DisconnectArgs) {
-  const implicitOrExplicit = implicit ? "implicit" : "explicit";
-
-  logWithColor(
-    Color.FgMagenta,
-    `User ${user.id} disconnected (${implicitOrExplicit})`
-  );
-
-  const roomDeleted = state.removeUserFromRoom(user.id, user.room);
-
-  if (!roomDeleted) {
-    broadcastToRoom({
-      type: "user-left-room",
-      source: userToSocketUser(user),
-    });
+export function handleDisconnect({ userId, disconnectType }: Args) {
+  if (!userId) {
+    logError(`User without userId disconnected (${disconnectType})`);
+    return;
   }
 
-  state.deleteUserById(user.id);
+  const disconnectUser = () => {
+    logWithColor(
+      Color.FgMagenta,
+      `User ${userId} disconnected (${disconnectType})`
+    );
+
+    const user = State.getUserById(userId);
+
+    const roomDeleted = State.removeUserFromRoom(userId, user.room);
+
+    if (!roomDeleted) {
+      broadcastToRoom(userToSocketUser(user), user.room, {
+        type: "user-left-room",
+      });
+    }
+
+    State.deleteUserById(user.id);
+  };
+
+  if (disconnectType === "implicit") {
+    State.setDisconnectTimer(userId, () => disconnectUser());
+  } else {
+    disconnectUser();
+  }
 }

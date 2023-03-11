@@ -7,7 +7,8 @@
     "dev": "tsc && nodemon --watch build/server/ build/server/server.js",
     "compile": "tsc && webpack --config ./webpack.config.js && cp -r ./src/client/main ./src/client/build && cp ./src/client/room/style.css ./src/client/build/room",
     "tsc": "tsc",
-    "serve": "webpack serve --config webpack.config.js"
+    "serve": "webpack serve --config webpack.config.js",
+    "deploy": "./ignored/deploy.sh"
   },
   "dependencies": {
     "@types/cors": "^2.8.12",

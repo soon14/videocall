@@ -46,6 +46,9 @@ export interface MessagesToClient {
     type: "error";
     error: string;
   };
+  ping: {
+    type: "ping";
+  };
 }
 
 // This type enforces every message type to contain a "type" field.
@@ -65,6 +68,9 @@ export interface MessagesToServer extends RelayMessages {
   chatMessage: {
     type: "chatMessage";
     text: string;
+  };
+  pong: {
+    type: "pong";
   };
 }
 

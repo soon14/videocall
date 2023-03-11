@@ -1,5 +1,5 @@
-import { Color, logError, logWithColor } from '../logger';
-import { generateUserId } from '../util';
+import { Color, logError, logWithColor } from "../logger";
+import { generateUserId } from "../util";
 import {
   CreateUserArgs,
   Room,
@@ -7,7 +7,7 @@ import {
   StateRepository,
   User,
   UserId,
-} from './StateRepository';
+} from "./StateRepository";
 
 interface Users {
   [userId: string]: User;
@@ -18,7 +18,7 @@ interface Rooms {
 }
 
 export class InMemoryState implements StateRepository {
-  private readonly DISCONNECT_TIMEOUT = 500;
+  private readonly DISCONNECT_TIMEOUT = 5000;
 
   users: Users = {};
   rooms: Rooms = {};
@@ -26,7 +26,7 @@ export class InMemoryState implements StateRepository {
   getUserById(userId: UserId) {
     const user = this.users[userId];
     if (!user) {
-      throw new Error('User not found: ' + userId);
+      throw new Error("User not found: " + userId);
     }
     return user;
   }
@@ -34,7 +34,7 @@ export class InMemoryState implements StateRepository {
   getRoomById(roomId: RoomId) {
     const room = this.rooms[roomId];
     if (!room) {
-      throw new Error('Room not found: ' + roomId);
+      throw new Error("Room not found: " + roomId);
     }
     return room;
   }
@@ -83,7 +83,7 @@ export class InMemoryState implements StateRepository {
         `Added user ${userId} to room ${roomId}, now ${room.participants.length} users in room`
       );
     } else {
-      this.rooms[roomId] = { name: '', participants: [userId] };
+      this.rooms[roomId] = { name: "", participants: [userId] };
       logWithColor(
         Color.FgYellow,
         `Created room ${roomId} with user ${userId}`

@@ -1,6 +1,4 @@
 import * as WebSocket from "ws";
-import express from "express";
-import * as http from "http";
 
 import { Color, logWithColor } from "./logger";
 import { initWsServer } from "./Socket/SocketConnection";

@@ -1,15 +1,13 @@
-import { messageHandlerArgs } from '.';
-import { RelayMessages } from '../Socket/SocketTypes';
-import { userToSocketUser } from '../util';
+import { sendToUser } from "../Socket/MessageSenders";
+import { State } from "../Socket/SocketConnection";
+import { RelayMessages } from "../Socket/SocketTypes";
+import { UserId } from "../StateRepository/StateRepository";
+import { userToSocketUser } from "../util";
 
-export const relayMessage = ({
-  sendToUser,
-  msg,
-  user,
-}: messageHandlerArgs<RelayMessages[keyof RelayMessages]>) => {
-  const { target, ...rest } = msg;
-  sendToUser(msg.target, {
-    ...rest,
-    source: userToSocketUser(user),
-  });
+export const relayMessage = (
+  msg: RelayMessages[keyof RelayMessages],
+  userId: UserId
+) => {
+  const { target, ..._ } = msg;
+  sendToUser(userToSocketUser(State.getUserById(userId)), msg.target, msg);
 };

@@ -1,6 +1,6 @@
-import { v4 as uuidv4 } from 'uuid';
-import { SocketUser } from './Socket/SocketTypes';
-import { User } from './StateRepository/StateRepository';
+import { v4 as uuidv4 } from "uuid";
+import { SocketUser } from "./Socket/SocketTypes";
+import { User } from "./StateRepository/StateRepository";
 
 export const generateUserId = () => {
   return uuidv4();

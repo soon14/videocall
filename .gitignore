@@ -4,3 +4,4 @@ node_modules/
 *.js
 !webpack.config.js
 *.map
+ignored

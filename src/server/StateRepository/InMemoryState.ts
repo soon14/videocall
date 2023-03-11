@@ -24,11 +24,15 @@ export class InMemoryState implements StateRepository {
   rooms: Rooms = {};
 
   getUserById(userId: UserId) {
-    const user = this.users[userId];
+    const user = this.findUserById(userId);
     if (!user) {
       throw new Error("User not found: " + userId);
     }
     return user;
+  }
+
+  findUserById(userId: UserId) {
+    return this.users[userId] ?? null;
   }
 
   getRoomById(roomId: RoomId) {

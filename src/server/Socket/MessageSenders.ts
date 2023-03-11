@@ -1,4 +1,4 @@
-import { log } from "../logger";
+import { log, logError } from "../logger";
 import { RoomId, UserId } from "../StateRepository/StateRepository";
 import { MyWebSocket, State } from "./SocketConnection";
 import { MessageToClientValues, SocketUser } from "./SocketTypes";
@@ -10,11 +10,15 @@ type DistributiveOmit<T, K extends keyof any> = T extends any
 
 export function sendToUser<T extends MessageToClientValues>(
   source: SocketUser | null,
-  target: UserId | MyWebSocket,
+  target: UserId,
   msg: DistributiveOmit<T, "source">
 ) {
-  const socket =
-    typeof target === "string" ? State.getUserById(target).socket : target;
+  const user = State.findUserById(target);
+  if (!user) {
+    logError(`Cannot send message to user ${target}: User does not exist`);
+  }
+
+  const socket = user.socket;
 
   const fullMessage = {
     ...msg,

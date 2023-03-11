@@ -33,6 +33,8 @@ export const disconnectUser = (
     `User ${userId} disconnected (${disconnectType})`
   );
 
+  State.clearDisconnectTimer(userId);
+
   const user = State.getUserById(userId);
 
   const roomDeleted = State.removeUserFromRoom(userId, user.room);

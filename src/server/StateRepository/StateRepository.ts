@@ -24,6 +24,7 @@ export type CreateUserArgs = {
 
 export interface StateRepository {
   getUserById(userId: UserId): void;
+  findUserById(userId: UserId): User;
   getRoomById(roomId: RoomId): void;
 
   createUser(args: CreateUserArgs): User;

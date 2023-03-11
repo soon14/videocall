@@ -1,4 +1,4 @@
-import { log } from "../logger";
+import { log, logError } from "../logger";
 import { sendToUser } from "../Socket/MessageSenders";
 import { State } from "../Socket/SocketConnection";
 import { UserId } from "../StateRepository/StateRepository";
@@ -10,10 +10,16 @@ export const handlePong = (userId: UserId) => {
   State.clearDisconnectTimer(userId);
 
   setTimeout(() => {
-    sendToUser(null, userId, {
-      type: "ping",
-    });
+    try {
+      sendToUser(null, userId, {
+        type: "ping",
+      });
 
-    State.setDisconnectTimer(userId, () => disconnectUser(userId, "implicit"));
+      State.setDisconnectTimer(userId, () =>
+        disconnectUser(userId, "implicit")
+      );
+    } catch (e: any) {
+      logError(e);
+    }
   }, 20000);
 };

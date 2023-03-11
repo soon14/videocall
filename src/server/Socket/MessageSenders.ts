@@ -16,6 +16,7 @@ export function sendToUser<T extends MessageToClientValues>(
   const user = State.findUserById(target);
   if (!user) {
     logError(`Cannot send message to user ${target}: User does not exist`);
+    return;
   }
 
   const socket = user.socket;

@@ -11,6 +11,11 @@ export const handlePong = (userId: UserId) => {
 
   setTimeout(() => {
     try {
+      const user = State.findUserById(userId);
+      if (!user) {
+        return;
+      }
+
       sendToUser(null, userId, {
         type: "ping",
       });

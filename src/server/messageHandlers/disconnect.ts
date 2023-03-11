@@ -28,22 +28,26 @@ export const disconnectUser = (
   userId: UserId,
   disconnectType: DisconnectType
 ) => {
-  logWithColor(
-    Color.FgMagenta,
-    `User ${userId} disconnected (${disconnectType})`
-  );
+  try {
+    logWithColor(
+      Color.FgMagenta,
+      `User ${userId} disconnected (${disconnectType})`
+    );
 
-  State.clearDisconnectTimer(userId);
+    State.clearDisconnectTimer(userId);
 
-  const user = State.getUserById(userId);
+    const user = State.getUserById(userId);
 
-  const roomDeleted = State.removeUserFromRoom(userId, user.room);
+    const roomDeleted = State.removeUserFromRoom(userId, user.room);
 
-  if (!roomDeleted) {
-    broadcastToRoom(userToSocketUser(user), user.room, {
-      type: "user-left-room",
-    });
+    if (!roomDeleted) {
+      broadcastToRoom(userToSocketUser(user), user.room, {
+        type: "user-left-room",
+      });
+    }
+
+    State.deleteUserById(user.id);
+  } catch (e: any) {
+    logError(e);
   }
-
-  State.deleteUserById(user.id);
 };

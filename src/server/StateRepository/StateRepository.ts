@@ -1,4 +1,4 @@
-import { MyWebSocket } from '../Socket/SocketConnection';
+import { MyWebSocket } from "../Socket/SocketConnection";
 
 export type Room = {
   name: string;

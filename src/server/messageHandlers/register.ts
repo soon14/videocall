@@ -4,6 +4,8 @@ import { MyWebSocket, State } from "../Socket/SocketConnection";
 import { MessagesToServer } from "../Socket/SocketTypes";
 import { UserId } from "../StateRepository/StateRepository";
 import { userToSocketUser } from "../util";
+import { disconnectUser } from "./disconnect";
+import { handlePong } from "./pongMessage";
 
 export function handleRegister(
   msg: MessagesToServer["register"],
@@ -36,6 +38,9 @@ export function handleRegister(
     userId,
     usersInRoom: otherUsers,
   });
+
+  // Start the ping/pong cycle
+  handlePong(userId);
 
   // let others know that a new user joined the room, so they can send him offers
   broadcastToRoom(socketUser, roomId, {

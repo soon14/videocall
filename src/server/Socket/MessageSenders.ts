@@ -9,19 +9,19 @@ type DistributiveOmit<T, K extends keyof any> = T extends any
   : never;
 
 export function sendToUser<T extends MessageToClientValues>(
-  source: SocketUser,
+  source: SocketUser | null,
   target: UserId | MyWebSocket,
   msg: DistributiveOmit<T, "source">
 ) {
   const socket =
     typeof target === "string" ? State.getUserById(target).socket : target;
 
-  const msgWithSource = {
+  const fullMessage = {
     ...msg,
     source,
   };
 
-  const msgString = JSON.stringify(msgWithSource);
+  const msgString = JSON.stringify(fullMessage);
 
   log(`Sending message of type ${msg.type} to user: ${target}`);
   socket.send(msgString);

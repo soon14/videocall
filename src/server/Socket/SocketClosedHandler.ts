@@ -9,10 +9,7 @@ export const handleSocketClose = (code: number, ws: MyWebSocket) => {
   try {
     const implicit = code !== EXPLICIT_DISCONNECT_CODE;
 
-    handleDisconnect({
-      disconnectType: implicit ? "implicit" : "explicit",
-      userId: ws.userId || null,
-    });
+    handleDisconnect(ws.userId || null, implicit ? "implicit" : "explicit");
   } catch (e: any) {
     logError("Error occuring inside ws close event handler");
     logError(e);

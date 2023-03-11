@@ -9,13 +9,8 @@ export const handlePong = (userId: UserId) => {
 
   State.clearDisconnectTimer(userId);
 
-  setTimeout(() => {
+  State.setPingPongTimer(userId, () => {
     try {
-      const user = State.findUserById(userId);
-      if (!user) {
-        return;
-      }
-
       sendToUser(null, userId, {
         type: "ping",
       });
@@ -26,5 +21,5 @@ export const handlePong = (userId: UserId) => {
     } catch (e: any) {
       logError(e);
     }
-  }, 20000);
+  });
 };

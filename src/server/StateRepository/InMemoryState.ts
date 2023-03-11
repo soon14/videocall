@@ -19,6 +19,7 @@ interface Rooms {
 
 export class InMemoryState implements StateRepository {
   private readonly DISCONNECT_TIMEOUT = 5000;
+  private readonly PINGPONG_TIMEOUT = 20000;
 
   users: Users = {};
   rooms: Rooms = {};
@@ -52,13 +53,18 @@ export class InMemoryState implements StateRepository {
       socket: ws,
       room: roomId,
       disconnectTimer: null,
+      pingpongTimer: null,
     };
 
     return this.users[userId];
   }
 
   clearDisconnectTimer(userId: UserId) {
-    const user = this.getUserById(userId);
+    const user = this.findUserById(userId);
+    if (!user) {
+      return;
+    }
+
     const disconnectTimer = user.disconnectTimer;
 
     if (disconnectTimer) {
@@ -68,13 +74,45 @@ export class InMemoryState implements StateRepository {
   }
 
   setDisconnectTimer(userId: UserId, callback: Function) {
-    const user = this.getUserById(userId);
+    this.clearDisconnectTimer(userId);
+    const user = this.findUserById(userId);
+    if (!user) {
+      return;
+    }
 
     const disconnectTimer = setTimeout(() => {
       callback();
     }, this.DISCONNECT_TIMEOUT);
 
     user.disconnectTimer = disconnectTimer;
+  }
+
+  clearPingPongTimer(userId: string): void {
+    const user = this.findUserById(userId);
+    if (!user) {
+      return;
+    }
+
+    const timer = user.pingpongTimer;
+
+    if (timer) {
+      clearTimeout(timer);
+      user.pingpongTimer = null;
+    }
+  }
+
+  setPingPongTimer(userId: string, callback: Function): void {
+    this.clearPingPongTimer(userId);
+    const user = this.findUserById(userId);
+    if (!user) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      callback();
+    }, this.PINGPONG_TIMEOUT);
+
+    user.pingpongTimer = timer;
   }
 
   addUserToRoom(userId: string, roomId: string): Room {

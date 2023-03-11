@@ -35,6 +35,7 @@ export const disconnectUser = (
     );
 
     State.clearDisconnectTimer(userId);
+    State.clearPingPongTimer(userId);
 
     const user = State.getUserById(userId);
 

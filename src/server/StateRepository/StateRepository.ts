@@ -11,6 +11,7 @@ export type User = {
   socket: MyWebSocket;
   room: string;
   disconnectTimer: NodeJS.Timeout | null; // id returned by setTimeOut()
+  pingpongTimer: NodeJS.Timeout | null; // id returned by setTimeOut()
 };
 
 export type UserId = string;
@@ -34,6 +35,9 @@ export interface StateRepository {
 
   clearDisconnectTimer(userId: UserId): void;
   setDisconnectTimer(userId: UserId, callback: Function): void;
+
+  setPingPongTimer(userId: UserId, callback: Function): void;
+  clearPingPongTimer(userId: UserId): void;
 
   addUserToRoom(userId: UserId, roomId: RoomId): Room;
   // Return value indicates if the room was deleted.

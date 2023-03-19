@@ -17,10 +17,10 @@ export function handleRegister(
     return handleReconnectingUser(ws.userId);
   }
 
-  const { name } = msg;
+  const { user: givenUser } = msg;
   const roomId = msg.roomId.toLowerCase();
 
-  const user = State.createUser({ roomId, name, ws });
+  const user = State.createUser({ roomId, name: givenUser.name, ws });
   const userId = user.id;
   ws.userId = userId;
 

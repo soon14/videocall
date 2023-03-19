@@ -18,7 +18,7 @@ export type UserId = string;
 export type RoomId = string;
 
 export type CreateUserArgs = {
-  name?: string;
+  name: string | null;
   ws: MyWebSocket;
   roomId: RoomId;
 };

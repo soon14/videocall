@@ -63,7 +63,10 @@ export interface MessagesToServer extends RelayMessages {
   register: {
     type: "register";
     roomId: string;
-    name?: string;
+    user: {
+      id: string | null;
+      name: string | null;
+    };
   };
   chatMessage: {
     type: "chatMessage";
